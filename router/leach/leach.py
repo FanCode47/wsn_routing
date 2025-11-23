@@ -128,7 +128,13 @@ class LEACH(Router, ClusterBased):
     def non_head_protection(self) -> int:
         p = self.n_cluster / len(self.non_sinks)
         r = self.round
-        return r % int(1 / p)
+        # protection window: nodes that have been cluster-head within
+        # the last `epoch` rounds should not be eligible. The epoch
+        # length in LEACH is 1/p (fixed), so return that value.
+        # Previously the code returned `r % int(1/p)` which varies with
+        # the round and breaks the intended rotation protection.
+        epoch = int(1 / p)
+        return epoch
 
     def threshold(self, node: Node):
         if self.rounds_non_head[node] < self.non_head_protection:

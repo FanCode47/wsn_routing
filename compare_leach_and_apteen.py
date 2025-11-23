@@ -53,6 +53,19 @@ def main():
         "leach": [],
         "apteen": [],
     }
+    # metrics: per-round arrays collected for each trial
+    per_run_metrics = {
+        "leach": {
+            "ch_count": [],
+            "avg_cluster_size": [],
+            "total_energy": [],
+        },
+        "apteen": {
+            "ch_count": [],
+            "avg_cluster_size": [],
+            "total_energy": [],
+        },
+    }
     durations = []
 
     import random as pyrandom
@@ -76,22 +89,51 @@ def main():
         # run LEACH
         leach.initialize()
         alive_leach = []
+        leach_ch = []
+        leach_cluster_size = []
+        leach_energy = []
         while (n := len(leach.alive_non_sinks)) > 0:
             alive_leach.append(n)
             leach.execute()
+            # collect metrics for this round
+            heads = list(leach.get_cluster_heads())
+            ch_count = len(heads)
+            member_counts = [len(list(leach.get_cluster_members(h))) for h in heads] if ch_count > 0 else []
+            avg_size = float(sum(member_counts) / len(member_counts)) if member_counts else 0.0
+            total_energy = sum(node.energy for node in leach.non_sinks)
+            leach_ch.append(ch_count)
+            leach_cluster_size.append(avg_size)
+            leach_energy.append(total_energy)
 
         # run APTEEN
         apteen.initialize()
         alive_apteen = []
+        apteen_ch = []
+        apteen_cluster_size = []
+        apteen_energy = []
         while (n := len(apteen.alive_non_sinks)) > 0:
             alive_apteen.append(n)
             apteen.execute()
+            heads = list(apteen.get_cluster_heads())
+            ch_count = len(heads)
+            member_counts = [len(list(apteen.get_cluster_members(h))) for h in heads] if ch_count > 0 else []
+            avg_size = float(sum(member_counts) / len(member_counts)) if member_counts else 0.0
+            total_energy = sum(node.energy for node in apteen.non_sinks)
+            apteen_ch.append(ch_count)
+            apteen_cluster_size.append(avg_size)
+            apteen_energy.append(total_energy)
 
         dt = time.time() - t0
         durations.append(dt)
 
         per_run["leach"].append(alive_leach)
         per_run["apteen"].append(alive_apteen)
+        per_run_metrics["leach"]["ch_count"].append(leach_ch)
+        per_run_metrics["leach"]["avg_cluster_size"].append(leach_cluster_size)
+        per_run_metrics["leach"]["total_energy"].append(leach_energy)
+        per_run_metrics["apteen"]["ch_count"].append(apteen_ch)
+        per_run_metrics["apteen"]["avg_cluster_size"].append(apteen_cluster_size)
+        per_run_metrics["apteen"]["total_energy"].append(apteen_energy)
 
         if args.save_runs:
             run_dir = outdir / "runs"
@@ -124,6 +166,19 @@ def main():
     leach_std = leach_stack.std(axis=0).tolist()
     apteen_mean = apteen_stack.mean(axis=0).tolist()
     apteen_std = apteen_stack.std(axis=0).tolist()
+
+    # aggregate metrics (ch_count, avg_cluster_size, total_energy)
+    def agg_metric(metric_name: str, proto: str):
+        stack = pad_and_stack(per_run_metrics[proto][metric_name])
+        return stack.mean(axis=0).tolist(), stack.std(axis=0).tolist()
+
+    leach_ch_mean, leach_ch_std = agg_metric("ch_count", "leach")
+    leach_cluster_size_mean, leach_cluster_size_std = agg_metric("avg_cluster_size", "leach")
+    leach_energy_mean, leach_energy_std = agg_metric("total_energy", "leach")
+
+    apteen_ch_mean, apteen_ch_std = agg_metric("ch_count", "apteen")
+    apteen_cluster_size_mean, apteen_cluster_size_std = agg_metric("avg_cluster_size", "apteen")
+    apteen_energy_mean, apteen_energy_std = agg_metric("total_energy", "apteen")
 
     duration = sum(durations)
 
@@ -161,6 +216,18 @@ def main():
         "leach_std": leach_std,
         "apteen_mean": apteen_mean,
         "apteen_std": apteen_std,
+        "leach_ch_mean": leach_ch_mean,
+        "leach_ch_std": leach_ch_std,
+        "leach_cluster_size_mean": leach_cluster_size_mean,
+        "leach_cluster_size_std": leach_cluster_size_std,
+        "leach_energy_mean": leach_energy_mean,
+        "leach_energy_std": leach_energy_std,
+        "apteen_ch_mean": apteen_ch_mean,
+        "apteen_ch_std": apteen_ch_std,
+        "apteen_cluster_size_mean": apteen_cluster_size_mean,
+        "apteen_cluster_size_std": apteen_cluster_size_std,
+        "apteen_energy_mean": apteen_energy_mean,
+        "apteen_energy_std": apteen_energy_std,
         "backend": plt.get_backend(),
     }
     json_path = outdir / "compare_results_aggregated.json"
