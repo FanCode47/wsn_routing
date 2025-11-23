@@ -151,7 +151,21 @@ class Router(metaclass=ABCMeta):
                 self.plotter.plot_line(src.position, dst.position, linestyle=ls, color=c)
 
     def show(self):
-        self.plotter.show()
+        # Use backend-aware behavior: in non-interactive backends (e.g. Agg)
+        # calling plt.show() is a no-op and figures accumulate. Detect
+        # the backend and close figures to avoid memory growth on long
+        # headless runs. For interactive backends keep original behavior.
+        import matplotlib
+        backend = matplotlib.get_backend().lower()
+        if 'agg' in backend or 'pdf' in backend or 'svg' in backend:
+            # non-interactive: ensure figure is drawn and then closed
+            try:
+                plt.draw()
+            except Exception:
+                pass
+            plt.close('all')
+        else:
+            self.plotter.show()
 
     def plot(self):
         self.plotter = Plotter2D(
@@ -273,6 +287,20 @@ def main():
     print(router.route)
     router.plot()
     print("")
+
+    n_alive = []
+    apteen = router
+    while len(apteen.alive_non_sinks) > 0:
+        apteen.execute()
+        n = len(apteen.alive_non_sinks)
+        n_alive.append(n)
+        print(f"round {len(n_alive)}: alive_non_sinks = {n}")
+
+    import matplotlib
+    if matplotlib.get_backend().lower() == "agg":
+        plt.savefig("apteen_alive_nodes.png", dpi=200)
+    else:
+        plt.show()
 
 
 if __name__ == "__main__":
