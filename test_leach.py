@@ -24,6 +24,7 @@ timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 results_dir = f"Results/run_{timestamp}"
 os.makedirs(results_dir, exist_ok=True)
 print(f"Results will be saved to: {results_dir}")
+
 snapshots_dir = os.path.join(results_dir, "snapshots")
 topology_dir = os.path.join(results_dir, "topology")
 os.makedirs(snapshots_dir, exist_ok=True)
@@ -49,7 +50,9 @@ def test_leach():
     leach = LEACH(*nodes, n_cluster=6)
     leach.initialize()
     initial_nodes = len(leach.alive_non_sinks)
-    snapshot_step = 0 if SNAPSHOT_STEP <= 0 else min(SNAPSHOT_STEP, initial_nodes)
+    # Guarantee at least one frame when a positive step is requested
+    snapshot_step = 0 if SNAPSHOT_STEP <= 0 else max(1, min(SNAPSHOT_STEP, initial_nodes))
+    topo_step = 0 if TOPO_STEP <= 0 else max(1, min(TOPO_STEP, initial_nodes))
     n_alive = []
     snapshot_paths = []
     topo_paths = []
@@ -75,7 +78,7 @@ def test_leach():
             print(f"Snapshot saved to {snap_path}")
             snapshot_paths.append(snap_path)
 
-        if TOPO_STEP > 0 and round_idx % TOPO_STEP == 0:
+        if topo_step > 0 and round_idx % topo_step == 0:
             topo_path = f"{topology_dir}/topology_leach_{round_idx}.png"
             leach.plot(save_path=topo_path, show=False)
             # close figure created inside Router.plot

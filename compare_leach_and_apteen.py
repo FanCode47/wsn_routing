@@ -1,21 +1,26 @@
-import matplotlib.pyplot as plt
 import os
 from datetime import datetime
+
+import matplotlib.pyplot as plt
 
 from distribution import *
 from router import APTEEN, LEACH
 
-# Don't show windows, save to files instead
-plt.switch_backend('Agg')
 
-# Create results folder with timestamp
-timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-results_dir = f"Results/run_{timestamp}"
-os.makedirs(results_dir, exist_ok=True)
-print(f"Results will be saved to: {results_dir}")
+def run_compare(output_dir: str | None = None, backend: str = "Agg"):
+    """Compare LEACH vs APTEEN lifetimes and save plot to output_dir."""
+    plt.switch_backend(backend)
+
+    if output_dir is None:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        output_dir = f"Results/run_{timestamp}"
+    os.makedirs(output_dir, exist_ok=True)
+    print(f"Results will be saved to: {output_dir}")
+
+    main(output_dir=output_dir)
 
 
-def main():
+def main(output_dir: str | None = None):
     sink = (0, 0)
     # distribution = uniform_in_square(150, 100, sink, "left-bottem")
     # distribution = power_line_naive(4, 375, 0, 0, 25, 40, sink)
@@ -32,37 +37,36 @@ def main():
     while (n := len(leach.alive_non_sinks)) > 0:
         alive_leach.append(n)
         leach.execute()
-        # if n % 10 == 0:
-        #     leach.plot()
-    print(alive_leach)
 
     apteen.initialize()
     alive_apteen = []
-    n2 = None
     while (n := len(apteen.alive_non_sinks)) > 0:
         alive_apteen.append(n)
         apteen.execute()
-        # if n2 and n == n2:
-        #     print(apteen.round)
-        # n2 = n
-        # if n % 10 == 0:
-        #     apteen.plot()
-    print(alive_apteen)
 
-    print("-" * 10)
-    with plt.style.context(["science", "ieee", "grid"]):
-        fig, ax = plt.subplots()
-        ax.plot(list(range(len(alive_leach))), alive_leach, label="LEACH")
-        ax.plot(list(range(len(alive_apteen))), alive_apteen, label="APTEEN")
+    try:
+        plt.style.use(["science", "ieee", "grid"])
+    except OSError:
+        plt.style.use('default')
+        plt.rcParams['axes.grid'] = True
+    
+    fig, ax = plt.subplots()
+    ax.plot(list(range(len(alive_leach))), alive_leach, label="LEACH")
+    ax.plot(list(range(len(alive_apteen))), alive_apteen, label="APTEEN")
 
-        ax.legend(title="protocols")
-        ax.set(xlabel="Round")
-        ax.set(ylabel="Number of nodes alive")
-        ax.autoscale()
-        plot_path = f"{results_dir}/compare_leach_apteen.png"
-        fig.savefig(plot_path, dpi=300, bbox_inches='tight')
-        print(f"Plot saved to {plot_path}")
+    ax.legend(title="protocols")
+    ax.set(xlabel="Round")
+    ax.set(ylabel="Number of nodes alive")
+    ax.autoscale()
+
+    if output_dir is None:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        output_dir = f"Results/run_{timestamp}"
+    os.makedirs(output_dir, exist_ok=True)
+    plot_path = f"{output_dir}/compare_leach_apteen.png"
+    fig.savefig(plot_path, dpi=300, bbox_inches='tight')
+    print(f"Plot saved to {plot_path}")
 
 
 if __name__ == "__main__":
-    main()
+    run_compare()
