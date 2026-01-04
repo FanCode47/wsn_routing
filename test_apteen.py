@@ -1,3 +1,4 @@
+import argparse
 import matplotlib.pyplot as plt
 import os
 from datetime import datetime
@@ -15,16 +16,32 @@ except ImportError:
 
 from distribution import *
 from router import APTEEN
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Run APTEEN simulation with snapshot/topology outputs")
+    parser.add_argument("--output-dir", type=str, default=None, help="Output folder (default: Results/run_YYYYMMDD_HHMMSS)")
+    parser.add_argument("--snapshot-step", type=int, default=None, help="Save alive-nodes plot every N rounds (0 disables; default from env SNAPSHOT_STEP)")
+    parser.add_argument("--topo-step", type=int, default=None, help="Save topology every N rounds (0 disables; default from env TOPO_STEP)")
+    parser.add_argument("--snapshot-gif", dest="snapshot_gif", action="store_true", help="Create GIF from alive-nodes snapshots")
+    parser.add_argument("--no-snapshot-gif", dest="snapshot_gif", action="store_false", help="Disable GIF from alive-nodes snapshots")
+    parser.add_argument("--topo-gif", dest="topo_gif", action="store_true", help="Create GIF from topology snapshots")
+    parser.add_argument("--no-topo-gif", dest="topo_gif", action="store_false", help="Disable GIF from topology snapshots")
+    parser.add_argument("--backend", type=str, default=None, help="Matplotlib backend (default: Agg)")
+    parser.set_defaults(snapshot_gif=None, topo_gif=None)
+    return parser.parse_args()
+
+
 def run_apteen(
     output_dir: str | None = None,
     snapshot_step: int | None = None,
     topo_step: int | None = None,
     snapshot_gif: bool | None = None,
     topo_gif: bool | None = None,
-    backend: str = "Agg",
+    backend: str | None = None,
 ):
     """Run APTEEN test with optional snapshot/topology/GIF generation."""
-    plt.switch_backend(backend)
+    plt.switch_backend(backend or "Agg")
 
     env_snapshot_step = int(os.environ.get("SNAPSHOT_STEP", "0"))
     env_topo_step = int(os.environ.get("TOPO_STEP", "0"))
@@ -169,4 +186,12 @@ def run_apteen(
 
 
 if __name__ == "__main__":
-    run_apteen()
+    args = parse_args()
+    run_apteen(
+        output_dir=args.output_dir,
+        snapshot_step=args.snapshot_step,
+        topo_step=args.topo_step,
+        snapshot_gif=args.snapshot_gif,
+        topo_gif=args.topo_gif,
+        backend=args.backend,
+    )

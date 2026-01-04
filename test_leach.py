@@ -1,3 +1,4 @@
+import argparse
 import matplotlib.pyplot as plt
 import os
 from datetime import datetime
@@ -16,30 +17,31 @@ except ImportError:
 from distribution import *
 from router import LEACH
 
-# Don't show windows, save to files instead
-plt.switch_backend('Agg')
 
-# Create results folder with timestamp
-timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-results_dir = f"Results/run_{timestamp}"
-os.makedirs(results_dir, exist_ok=True)
-print(f"Results will be saved to: {results_dir}")
-
-snapshots_dir = os.path.join(results_dir, "snapshots")
-topology_dir = os.path.join(results_dir, "topology")
-os.makedirs(snapshots_dir, exist_ok=True)
-os.makedirs(topology_dir, exist_ok=True)
-
-# Snapshot step control: 0 disables intermediate saves; >0 saves every N rounds
-SNAPSHOT_STEP = int(os.environ.get("SNAPSHOT_STEP", "0"))
-# Topology snapshot: 0 disables; >0 saves network plot every N rounds
-TOPO_STEP = int(os.environ.get("TOPO_STEP", "0"))
-# GIF export: 1 enables GIF from value snapshots
-SNAPSHOT_GIF = os.environ.get("SNAPSHOT_GIF", "0") == "1"
-TOPO_GIF = os.environ.get("TOPO_GIF", "0") == "1"
+def parse_args():
+    parser = argparse.ArgumentParser(description="Run LEACH simulation with snapshot/topology outputs")
+    parser.add_argument("--snapshot-step", type=int, default=int(os.environ.get("SNAPSHOT_STEP", "0")), help="Save alive-nodes plot every N rounds (0 disables)")
+    parser.add_argument("--topo-step", type=int, default=int(os.environ.get("TOPO_STEP", "0")), help="Save topology every N rounds (0 disables)")
+    parser.add_argument("--snapshot-gif", action="store_true", default=os.environ.get("SNAPSHOT_GIF", "0") == "1", help="Create GIF from alive-nodes snapshots")
+    parser.add_argument("--topo-gif", action="store_true", default=os.environ.get("TOPO_GIF", "0") == "1", help="Create GIF from topology snapshots")
+    return parser.parse_args()
 
 
-def test_leach():
+def test_leach(args):
+    # Don't show windows, save to files instead
+    plt.switch_backend('Agg')
+
+    # Create results folder with timestamp
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    results_dir = f"Results/run_{timestamp}"
+    os.makedirs(results_dir, exist_ok=True)
+    print(f"Results will be saved to: {results_dir}")
+
+    snapshots_dir = os.path.join(results_dir, "snapshots")
+    topology_dir = os.path.join(results_dir, "topology")
+    os.makedirs(snapshots_dir, exist_ok=True)
+    os.makedirs(topology_dir, exist_ok=True)
+
     sink = (0, 0)
     nodes = simple_loader(
         sink,
@@ -51,8 +53,8 @@ def test_leach():
     leach.initialize()
     initial_nodes = len(leach.alive_non_sinks)
     # Guarantee at least one frame when a positive step is requested
-    snapshot_step = 0 if SNAPSHOT_STEP <= 0 else max(1, min(SNAPSHOT_STEP, initial_nodes))
-    topo_step = 0 if TOPO_STEP <= 0 else max(1, min(TOPO_STEP, initial_nodes))
+    snapshot_step = 0 if args.snapshot_step <= 0 else max(1, min(args.snapshot_step, initial_nodes))
+    topo_step = 0 if args.topo_step <= 0 else max(1, min(args.topo_step, initial_nodes))
     n_alive = []
     snapshot_paths = []
     topo_paths = []
@@ -108,7 +110,7 @@ def test_leach():
     plt.close(fig)
     print(f"Plot saved to {plot_path}")
 
-    if SNAPSHOT_GIF and snapshot_paths:
+    if args.snapshot_gif and snapshot_paths:
         if imageio is None:
             print("SNAPSHOT_GIF=1 set but imageio is not installed; skipping GIF export.")
         else:
@@ -141,7 +143,7 @@ def test_leach():
             except Exception as exc:
                 print(f"Failed to create GIF: {exc}")
 
-    if TOPO_GIF and topo_paths:
+    if args.topo_gif and topo_paths:
         if imageio is None:
             print("TOPO_GIF=1 set but imageio is not installed; skipping GIF export.")
         else:
@@ -173,4 +175,5 @@ def test_leach():
 
 
 if __name__ == "__main__":
-    test_leach()
+    args = parse_args()
+    test_leach(args)

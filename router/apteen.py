@@ -89,20 +89,20 @@ class APTEEN(LEACHPrim):
     
     def get_parameters_for_node(self, node: Node) -> tuple[float, float, int]:
         """
-        Отримати параметри (HT, ST, TC) для конкретного вузла.
-        
-        Якщо вузол член кластера з кастомними параметрами - повертає їх,
-        інакше - глобальні параметри.
+        Get parameters (HT, ST, TC) for a specific node.
+
+        If the node belongs to a cluster with custom parameters, return those;
+        otherwise return the global defaults.
         """
-        # Знайти CH цього вузла
+        # Find the cluster head (CH) for this node
         for head in self.get_cluster_heads():
             if node in self.get_cluster_members(head):
-                # Якщо є кастомні параметри для цього кластера
+                # If this cluster has custom parameters
                 if head in self.cluster_parameters:
                     return self.cluster_parameters[head]
                 break
         
-        # Глобальні параметри за замовчуванням
+        # Global default parameters
         return (self.hard_threshold, self.soft_threshold, self.count_time)
     
     def should_transmit(self, node: Node, current_value: float) -> bool:
@@ -169,16 +169,16 @@ class APTEEN(LEACHPrim):
                                soft_threshold: float, 
                                count_time: int):
         """
-        Встановити унікальні параметри для конкретного кластера.
-        
-        Це дозволяє різним кластерам працювати з різними пороговими значеннями
-        (справжня адаптивність APTEEN).
-        
+        Set custom parameters for a specific cluster.
+
+        This lets different clusters run with different thresholds
+        (true APTEEN adaptability).
+
         Args:
-            cluster_head: Голова кластера
-            hard_threshold: HT для цього кластера
-            soft_threshold: ST для цього кластера
-            count_time: TC для цього кластера
+            cluster_head: Cluster head node
+            hard_threshold: HT for this cluster
+            soft_threshold: ST for this cluster
+            count_time: TC for this cluster
         """
         self.cluster_parameters[cluster_head] = (hard_threshold, soft_threshold, count_time)
         # Mark that this CH needs to re-broadcast
