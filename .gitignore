@@ -133,3 +133,6 @@ dmypy.json
 
 # figures
 /*.png
+
+# Generated results
+Results/

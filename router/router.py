@@ -121,6 +121,10 @@ class Router(metaclass=ABCMeta):
         return exception_style
 
     def get_node_style(self, node: Node) -> str:
+        # Dead nodes are shown in gray
+        if not node.is_alive():
+            return "dead"
+        
         return self.__get_style(
             self.__node_styles,
             self.node_feature_op,
@@ -140,8 +144,27 @@ class Router(metaclass=ABCMeta):
 
     def plot_nodes(self):
         for node in self.nodes:
-            style = self.get_node_style(node)
-            self.plotter.plot_point(node.position, style)
+            # Shape by category
+            if node.category == NodeCategory.sink:
+                marker = 's'  # square
+            elif node.category == NodeCategory.relay:
+                marker = 'D'  # diamond
+            else:
+                marker = 'o'  # sensor
+
+            # Color by energy
+            if not node.is_alive():
+                color = 'gray'
+            else:
+                energy_ratio = node.energy / node.default_energy_max
+                if energy_ratio > 0.5:
+                    color = 'green'
+                elif energy_ratio > 0.25:
+                    color = 'yellow'
+                else:
+                    color = 'orange'
+
+            self.plotter.plot_point(node.position, fmt=marker, color=color)
 
     def plot_routes(self):
         for i, src in enumerate(self.nodes):
@@ -153,7 +176,7 @@ class Router(metaclass=ABCMeta):
     def show(self):
         self.plotter.show()
 
-    def plot(self):
+    def plot(self, save_path: str | None = None, show: bool = True):
         self.plotter = Plotter2D(
             self.position_min[0],
             self.position_min[1],
@@ -165,7 +188,12 @@ class Router(metaclass=ABCMeta):
         )
         self.plot_nodes()
         self.plot_routes()
-        self.show()
+
+        if save_path:
+            self.plotter.save(save_path)
+
+        if show:
+            self.show()
 
 
 class Plotter2D:
@@ -182,8 +210,11 @@ class Plotter2D:
             )
         )
 
-    def plot_point(self, position, fmt: Optional[str] = None):
-        self.ax.plot(position[0], position[1], fmt)
+    def plot_point(self, position, fmt: Optional[str] = None, color: Optional[str] = None):
+        if color:
+            self.ax.plot(position[0], position[1], fmt or 'o', color=color)
+        else:
+            self.ax.plot(position[0], position[1], fmt)
 
     def set_bound(self, min_x: float, min_y: float, max_x: float, max_y: float, ):
         self.ax.axis([min_x, max_x, min_y, max_y])
@@ -197,6 +228,9 @@ class Plotter2D:
     @staticmethod
     def show():
         plt.show()
+
+    def save(self, path: str, *, dpi: int = 300):
+        self.fig.savefig(path, dpi=dpi, bbox_inches='tight')
 
 
 class SimpleRouter(Router):

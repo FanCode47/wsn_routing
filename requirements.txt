@@ -1,0 +1,6 @@
+numpy
+matplotlib
+filterpy
+scienceplots
+imageio
+pillow

@@ -1,0 +1,44 @@
+# Python Dependencies and Virtual Environment Management
+
+## Virtual Environment Commands
+
+# Create virtual environment
+python3 -m venv .venv
+
+# Activate virtual environment (Linux/Mac)
+source .venv/bin/activate
+
+# Deactivate virtual environment
+deactivate
+
+# Delete virtual environment
+rm -rf .venv
+
+# Check which Python is being used
+which python
+
+## Required Libraries Installation
+
+# Install all dependencies at once
+pip install numpy matplotlib filterpy scienceplots
+
+# Or install one by one:
+pip install numpy          # Numerical operations, arrays
+pip install matplotlib     # Plotting and visualization
+pip install filterpy       # Kalman filter implementation
+pip install scienceplots   # Scientific plot styles
+
+## Upgrade pip (recommended)
+pip install --upgrade pip
+
+## List installed packages
+pip list
+
+## Export dependencies to requirements.txt
+pip freeze > requirements.txt
+
+## Install from requirements.txt
+pip install -r requirements.txt
+
+## Uninstall a package
+pip uninstall package_name

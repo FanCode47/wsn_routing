@@ -1,7 +1,18 @@
 import matplotlib.pyplot as plt
+import os
+from datetime import datetime
 
 from distribution import *
 from router import APTEEN, LEACH
+
+# Don't show windows, save to files instead
+plt.switch_backend('Agg')
+
+# Create results folder with timestamp
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+results_dir = f"Results/run_{timestamp}"
+os.makedirs(results_dir, exist_ok=True)
+print(f"Results will be saved to: {results_dir}")
 
 
 def main():
@@ -48,7 +59,9 @@ def main():
         ax.set(xlabel="Round")
         ax.set(ylabel="Number of nodes alive")
         ax.autoscale()
-        plt.show()
+        plot_path = f"{results_dir}/compare_leach_apteen.png"
+        fig.savefig(plot_path, dpi=300, bbox_inches='tight')
+        print(f"Plot saved to {plot_path}")
 
 
 if __name__ == "__main__":
