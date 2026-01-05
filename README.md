@@ -1,0 +1,245 @@
+# WSN Routing Simulation Suite
+
+This repository contains three Python scripts for simulating and visualizing Wireless Sensor Network (WSN) routing protocols.
+
+## Scripts Overview
+
+### 1. `test_leach.py` - LEACH Protocol Simulation
+Simulates the LEACH (Low-Energy Adaptive Clustering Hierarchy) routing protocol until all nodes in the network die.
+
+**Default Parameters:**
+- Nodes: 100
+- Area: 200.0 × 200.0
+- Snapshot step: 10 rounds
+- Topology step: 10 rounds
+- GIF export: enabled
+
+**Usage:**
+```bash
+# Run with default parameters
+python test_leach.py
+
+# Custom configuration
+python test_leach.py --nodes 50 --area 150 --max-rounds 500
+
+# Save snapshots every 5 rounds, disable topology GIF
+python test_leach.py --snapshot-step 5 --no-topo-gif
+
+# Specify custom output directory
+python test_leach.py --output-dir my_results
+```
+
+**Command-line Arguments:**
+```
+--nodes NUM              Number of sensor nodes (default: 100)
+--area SIZE              Square area side length (default: 200.0)
+--max-rounds N           Maximum rounds to run (default: None = until all nodes die)
+--output-dir PATH       Output directory (default: auto-generated Results/run_YYYYMMDD_HHMMSS)
+--snapshot-step N       Save alive-nodes plot every N rounds (default: 10, 0 = disabled)
+--topo-step N           Save topology every N rounds (default: 10, 0 = disabled)
+--snapshot-gif          Create GIF from snapshots (enabled by default)
+--no-snapshot-gif       Disable snapshot GIF
+--topo-gif              Create GIF from topology (enabled by default)
+--no-topo-gif           Disable topology GIF
+--backend NAME          Matplotlib backend: Agg, TkAgg, cairo, etc. (default: Agg)
+```
+
+---
+
+### 2. `test_apteen.py` - APTEEN Protocol Simulation
+Simulates the APTEEN (Adaptive Periodic Threshold-sensitive Energy Efficient sensor Network) protocol.
+
+**Default Parameters:**
+- Nodes: 100
+- Area: 100.0 × 100.0
+- Snapshot step: 10 rounds
+- Topology step: 10 rounds
+- GIF export: enabled
+
+**Usage:**
+```bash
+# Run with default parameters
+python test_apteen.py
+
+# Custom configuration
+python test_apteen.py --nodes 80 --area 120 --max-rounds 1000
+
+# Save topology every 5 rounds only
+python test_apteen.py --topo-step 5 --no-snapshot-gif
+
+# Specify custom output directory
+python test_apteen.py --output-dir apteen_results
+```
+
+**Command-line Arguments:**
+```
+--nodes NUM              Number of sensor nodes (default: 100)
+--area SIZE              Square area side length (default: 100.0)
+--max-rounds N           Maximum rounds to run (default: None = until all nodes die)
+--output-dir PATH       Output directory (default: auto-generated Results/run_YYYYMMDD_HHMMSS)
+--snapshot-step N       Save alive-nodes plot every N rounds (default: 10, 0 = disabled)
+--topo-step N           Save topology every N rounds (default: 10, 0 = disabled)
+--snapshot-gif          Create GIF from snapshots (enabled by default)
+--no-snapshot-gif       Disable snapshot GIF
+--topo-gif              Create GIF from topology (enabled by default)
+--no-topo-gif           Disable topology GIF
+--backend NAME          Matplotlib backend: Agg, TkAgg, cairo, etc. (default: Agg)
+```
+
+---
+
+### 3. `visualize_parameters.py` - APTEEN Parameter Comparison
+Runs six different APTEEN configurations and generates comparison charts showing impact of parameters on network lifetime.
+
+**Configurations:**
+1. **LEACH-like** (HT=0.1, ST=0.1, TC=1)
+2. **TEEN-like** (HT=50, ST=3, TC=1000)
+3. **Conservative** (HT=70, ST=5, TC=20)
+4. **Aggressive** (HT=40, ST=1, TC=5)
+5. **Balanced** (HT=50, ST=2, TC=10)
+6. **Adaptive per-cluster** (mixed parameters)
+
+**Default Parameters:**
+- Nodes: 30
+- Area: 100.0 × 100.0
+- Topology step: 50 rounds
+- GIF export: enabled
+- Output: Results/params_run_YYYYMMDD_HHMMSS
+
+**Usage:**
+```bash
+# Run with default parameters
+python visualize_parameters.py
+
+# Custom configuration
+python visualize_parameters.py --nodes 50 --area 150
+
+# Disable GIF and show plot window
+python visualize_parameters.py --no-topo-gif --show
+
+# Custom output directory
+python visualize_parameters.py --outdir my_params_analysis
+```
+
+**Command-line Arguments:**
+```
+--nodes NUM              Number of sensor nodes per simulation (default: 30)
+--area SIZE              Square area side length (default: 100.0)
+--max-rounds N           Maximum rounds per simulation (default: None)
+--outdir PATH           Output directory prefix (default: Results/params_run)
+--show                  Show plot window (disabled by default)
+--no-show               Don't show plot window (enabled by default)
+--topo-step N           Save topology snapshots every N rounds (default: 50, 0 = disabled)
+--topo-gif              Create topology GIF (enabled by default)
+--no-topo-gif           Disable topology GIF
+--backend NAME          Matplotlib backend: Agg, TkAgg, cairo, etc. (default: Agg)
+```
+
+---
+
+## Output Structure
+
+Each simulation creates the following directory structure:
+
+```
+Results/run_YYYYMMDD_HHMMSS/
+├── snapshots/
+│   ├── test_leach_step_10.png
+│   ├── test_leach_step_20.png
+│   └── ...
+├── topology/
+│   ├── topology_leach_10.png
+│   ├── topology_leach_20.png
+│   └── ...
+├── test_leach.png          (final alive-nodes plot)
+├── test_leach.gif          (snapshot animation)
+└── topology_leach.gif      (topology animation)
+```
+
+---
+
+## Environment Variables
+
+You can set default values via environment variables:
+
+```bash
+# LEACH/APTEEN tests
+export SNAPSHOT_STEP=5      # Default snapshot frequency
+export TOPO_STEP=5          # Default topology frequency
+export SNAPSHOT_GIF=1       # Enable snapshot GIF (1) or disable (0)
+export TOPO_GIF=1           # Enable topology GIF (1) or disable (0)
+
+# Run simulation with environment defaults
+python test_leach.py
+```
+
+---
+
+## Matplotlib Backends
+
+The `--backend` parameter allows you to choose different rendering backends:
+
+- **Agg** (default): Fast, non-interactive. Best for batch processing and file output
+- **TkAgg**: Interactive GUI with zoom/pan capabilities
+- **cairo**: Vector graphics backend for publication-quality output
+- **Qt5Agg**: Qt-based interactive backend (requires Qt5 plugins)
+
+**Example:**
+```bash
+python test_leach.py --backend TkAgg
+python test_leach.py --backend cairo
+```
+
+---
+
+## Requirements
+
+- Python 3.7+
+- matplotlib
+- numpy
+- imageio (for GIF creation)
+- PIL/Pillow (for image processing)
+
+**Install dependencies:**
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+## Examples
+
+### Quick Test Run
+```bash
+python test_leach.py --nodes 20 --max-rounds 100
+```
+
+### Detailed APTEEN Analysis
+```bash
+python test_apteen.py --nodes 50 --area 150 --snapshot-step 5 --topo-step 5
+```
+
+### Compare Parameter Impact
+```bash
+python visualize_parameters.py --nodes 40 --area 120 --topo-step 25
+```
+
+### Disable All Visualizations (Fast Run)
+```bash
+python test_leach.py --nodes 100 --snapshot-step 0 --topo-step 0
+```
+
+### Use Custom Output Directory
+```bash
+python test_leach.py --output-dir ./my_experiments/exp1
+python test_apteen.py --output-dir ./my_experiments/exp2
+```
+
+---
+
+## Notes
+
+- Simulations run until all nodes die by default. Use `--max-rounds` to limit execution time.
+- Snapshot and topology saving can impact simulation speed. Use larger steps (e.g., 50, 100) for faster runs.
+- For headless servers, use `--backend Agg` (default) to avoid display issues.
+- GIF generation requires imageio. If not installed, a warning will be shown but simulation continues.
