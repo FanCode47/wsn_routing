@@ -20,7 +20,10 @@ from router import APTEEN
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Run APTEEN simulation with snapshot/topology outputs")
-    parser.add_argument("--output-dir", type=str, default=None, help="Output folder (default: Results/run_YYYYMMDD_HHMMSS)")
+    parser.add_argument("--nodes", type=int, default=100, help="Number of sensor nodes (default: 100)")
+    parser.add_argument("--area", type=float, default=100.0, help="Square area side length for node placement (default: 100.0)")
+    parser.add_argument("--max-rounds", type=int, default=None, help="Maximum rounds to run (None = run until all nodes die)")
+    parser.add_argument("--output-dir", type=str, default=None, help="Output folder (if not specified, auto-generates Results/run_YYYYMMDD_HHMMSS)")
     parser.add_argument("--snapshot-step", type=int, default=None, help="Save alive-nodes plot every N rounds (0 disables; default from env SNAPSHOT_STEP)")
     parser.add_argument("--topo-step", type=int, default=None, help="Save topology every N rounds (0 disables; default from env TOPO_STEP)")
     parser.add_argument("--snapshot-gif", dest="snapshot_gif", action="store_true", help="Create GIF from alive-nodes snapshots")
@@ -33,6 +36,9 @@ def parse_args():
 
 
 def run_apteen(
+    nodes: int = 100,
+    area: float = 100.0,
+    max_rounds: int | None = None,
     output_dir: str | None = None,
     snapshot_step: int | None = None,
     topo_step: int | None = None,
@@ -43,10 +49,10 @@ def run_apteen(
     """Run APTEEN test with optional snapshot/topology/GIF generation."""
     plt.switch_backend(backend or "Agg")
 
-    env_snapshot_step = int(os.environ.get("SNAPSHOT_STEP", "0"))
-    env_topo_step = int(os.environ.get("TOPO_STEP", "0"))
-    env_snapshot_gif = os.environ.get("SNAPSHOT_GIF", "0") == "1"
-    env_topo_gif = os.environ.get("TOPO_GIF", "0") == "1"
+    env_snapshot_step = int(os.environ.get("SNAPSHOT_STEP", "10"))
+    env_topo_step = int(os.environ.get("TOPO_STEP", "10"))
+    env_snapshot_gif = os.environ.get("SNAPSHOT_GIF", "1") == "1"
+    env_topo_gif = os.environ.get("TOPO_GIF", "1") == "1"
 
     snapshot_step = env_snapshot_step if snapshot_step is None else snapshot_step
     topo_step = env_topo_step if topo_step is None else topo_step
@@ -64,12 +70,12 @@ def run_apteen(
     print(f"Results will be saved to: {output_dir}")
 
     sink = (0, 0)
-    nodes = simple_loader(
+    sensor_nodes = simple_loader(
         sink,
-        uniform_in_square(100, 100, sink)
+        uniform_in_square(area, nodes, sink)
     )
 
-    apteen = APTEEN(*nodes, n_cluster=5)
+    apteen = APTEEN(*sensor_nodes, n_cluster=5)
     apteen.initialize()
     initial_nodes = len(apteen.alive_non_sinks)
     # Guarantee at least one frame when a positive step is requested
@@ -78,7 +84,7 @@ def run_apteen(
     n_alive = []
     snapshot_paths = []
     topo_paths = []
-    while len(apteen.alive_non_sinks) > 0:
+    while len(apteen.alive_non_sinks) > 0 and (max_rounds is None or len(n_alive) < max_rounds):
         apteen.execute()
         n = len(apteen.alive_non_sinks)
         n_alive.append(n)
@@ -106,6 +112,9 @@ def run_apteen(
             plt.close(apteen.plotter.fig)
             print(f"Topology snapshot saved to {topo_path}")
             topo_paths.append(topo_path)
+
+        print(f"cluster heads: {len(apteen.clusters)}")
+        print(f"nodes alive: {n}")
     print("")
     rounds = list(range(len(n_alive)))
     fig, ax = plt.subplots()
@@ -188,6 +197,9 @@ def run_apteen(
 if __name__ == "__main__":
     args = parse_args()
     run_apteen(
+        nodes=args.nodes,
+        area=args.area,
+        max_rounds=args.max_rounds,
         output_dir=args.output_dir,
         snapshot_step=args.snapshot_step,
         topo_step=args.topo_step,

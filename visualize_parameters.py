@@ -189,11 +189,12 @@ def visualize_comparison(
     show: bool = True,
     topo_step: int = 0,
     topo_gif: bool = False,
+    backend: str | None = None,
 ):
     """Run six presets and plot comparison in English without emojis; optionally save topology snapshots/GIFs per preset."""
 
     if not show:
-        plt.switch_backend("Agg")
+        plt.switch_backend(backend or "Agg")
 
     print(
         f"Running six APTEEN presets (nodes={n_sensor}, area={area_size}x{area_size})"
@@ -418,16 +419,13 @@ def main():
         default="Results/params_run",
         help="Output directory for figures (date suffix auto-appended)",
     )
-    parser.add_argument("--no-show", action="store_true", default=True, help="Skip showing the plot window")
+    parser.add_argument("--no-show", action="store_true", help="Skip showing the plot window")
     parser.add_argument("--show", action="store_false", dest="no_show", help="Show the plot window")
-    parser.add_argument("--topo-step", type=int, default=50, help="Save topology snapshots every N rounds (0=disabled)")
-    parser.add_argument(
-        "--topo-gif",
-        action="store_true",
-        default=True,
-        help="Export topology GIF per preset (implies snapshots)",
-    )
-    parser.add_argument("--no-topo-gif", action="store_false", dest="topo_gif", help="Disable topology GIF export")
+    parser.add_argument("--topo-step", type=int, default=int(os.environ.get("TOPO_STEP", "50")), help="Save topology snapshots every N rounds (0=disabled, default: 50)")
+    parser.add_argument("--topo-gif", dest="topo_gif", action="store_true", help="Export topology GIF per preset (implies snapshots)")
+    parser.add_argument("--no-topo-gif", dest="topo_gif", action="store_false", help="Disable topology GIF export")
+    parser.add_argument("--backend", type=str, default=None, help="Matplotlib backend (default: Agg)")
+    parser.set_defaults(no_show=True, topo_gif=os.environ.get("TOPO_GIF", "1") == "1")
     args = parser.parse_args()
 
     final_outdir = None
@@ -442,6 +440,7 @@ def main():
         show=not args.no_show,
         topo_step=args.topo_step,
         topo_gif=args.topo_gif,
+        backend=args.backend,
     )
 
 

@@ -20,20 +20,31 @@ from router import LEACH
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Run LEACH simulation with snapshot/topology outputs")
-    parser.add_argument("--snapshot-step", type=int, default=int(os.environ.get("SNAPSHOT_STEP", "0")), help="Save alive-nodes plot every N rounds (0 disables)")
-    parser.add_argument("--topo-step", type=int, default=int(os.environ.get("TOPO_STEP", "0")), help="Save topology every N rounds (0 disables)")
-    parser.add_argument("--snapshot-gif", action="store_true", default=os.environ.get("SNAPSHOT_GIF", "0") == "1", help="Create GIF from alive-nodes snapshots")
-    parser.add_argument("--topo-gif", action="store_true", default=os.environ.get("TOPO_GIF", "0") == "1", help="Create GIF from topology snapshots")
+    parser.add_argument("--nodes", type=int, default=100, help="Number of sensor nodes (default: 100)")
+    parser.add_argument("--area", type=float, default=200.0, help="Square area side length for node placement (default: 200.0)")
+    parser.add_argument("--max-rounds", type=int, default=None, help="Maximum rounds to run (None = run until all nodes die)")
+    parser.add_argument("--output-dir", type=str, default=None, help="Output folder (if not specified, auto-generates Results/run_YYYYMMDD_HHMMSS)")
+    parser.add_argument("--snapshot-step", type=int, default=int(os.environ.get("SNAPSHOT_STEP", "10")), help="Save alive-nodes plot every N rounds (0 disables, default: 10)")
+    parser.add_argument("--topo-step", type=int, default=int(os.environ.get("TOPO_STEP", "10")), help="Save topology every N rounds (0 disables, default: 10)")
+    parser.add_argument("--snapshot-gif", dest="snapshot_gif", action="store_true", help="Create GIF from alive-nodes snapshots")
+    parser.add_argument("--no-snapshot-gif", dest="snapshot_gif", action="store_false", help="Disable GIF from alive-nodes snapshots")
+    parser.add_argument("--topo-gif", dest="topo_gif", action="store_true", help="Create GIF from topology snapshots")
+    parser.add_argument("--no-topo-gif", dest="topo_gif", action="store_false", help="Disable GIF from topology snapshots")
+    parser.add_argument("--backend", type=str, default=None, help="Matplotlib backend (default: Agg)")
+    parser.set_defaults(snapshot_gif=os.environ.get("SNAPSHOT_GIF", "1") == "1", topo_gif=os.environ.get("TOPO_GIF", "1") == "1")
     return parser.parse_args()
 
 
 def test_leach(args):
     # Don't show windows, save to files instead
-    plt.switch_backend('Agg')
+    plt.switch_backend(args.backend or 'Agg')
 
     # Create results folder with timestamp
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    results_dir = f"Results/run_{timestamp}"
+    if args.output_dir is None:
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        results_dir = f"Results/run_{timestamp}"
+    else:
+        results_dir = args.output_dir
     os.makedirs(results_dir, exist_ok=True)
     print(f"Results will be saved to: {results_dir}")
 
@@ -45,7 +56,7 @@ def test_leach(args):
     sink = (0, 0)
     nodes = simple_loader(
         sink,
-        uniform_in_square(200, 100, sink, "left-bottem")
+        uniform_in_square(args.area, args.nodes, sink, "left-bottem")
     )
 
     # leach = LEACH(*nodes_on_power_line_naive(), n_cluster=5)
@@ -58,7 +69,7 @@ def test_leach(args):
     n_alive = []
     snapshot_paths = []
     topo_paths = []
-    while len(leach.alive_non_sinks) > 0:
+    while len(leach.alive_non_sinks) > 0 and (args.max_rounds is None or len(n_alive) < args.max_rounds):
         leach.execute()
         n = len(leach.alive_non_sinks)
         n_alive.append(n)
