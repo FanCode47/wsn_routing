@@ -1,6 +1,39 @@
 # WSN Routing Simulation Suite
 
-This repository contains three Python scripts for simulating and visualizing Wireless Sensor Network (WSN) routing protocols.
+This repository contains a comprehensive suite for simulating and optimizing Wireless Sensor Network (WSN) routing protocols with support for LEACH, APTEEN, and JSO-based algorithms.
+
+## Project Architecture
+
+### Core Modules
+
+#### `router/` - Routing Protocol Implementation
+- **`node.py`**: Node class with energy models and communication methods
+- **`router.py`**: Base routing protocol interface
+- **`routing.py`**: Graph algorithms (Prim's MST, etc.)
+- **`common.py`**: Shared utilities for routing protocols
+- **`apteen.py`**: APTEEN protocol implementation
+- **`jso_route.py`**: JSO-optimized routing (JSOGreedy, JSOPrim, JSOKalman)
+- **`leach/`**: LEACH protocol variants
+  - `leach.py`: Standard LEACH protocol
+  - `leach_pso.py`: PSO-optimized LEACH
+  - `hierarchical.py`: Hierarchical clustering
+
+#### `optimizer/` - Metaheuristic Optimization
+- **`optimizer.py`**: JSO (Jellyfish Search Optimizer) and PSO implementations
+- **`initializer.py`**: Logistic chaos map for population initialization
+- **`common.py`**: Shared optimization utilities
+
+### Utility Scripts
+
+#### `distribution.py` - Network Topology Generation
+Generates various sensor node distributions:
+- **`uniform_in_square()`**: Uniform distribution in square area
+- **`uniform_in_circle()`**: Uniform distribution in circular area
+- **`power_line_naive()`**: Power line topology with relay nodes
+- **`simple_loader()`**: Load predefined node positions
+
+#### `kalman_energy_estimation.py` - Energy Prediction
+Demonstrates Kalman filter-based energy prediction for WSN nodes. Uses historical energy data to estimate future energy consumption patterns.
 
 ## Scripts Overview
 
@@ -157,6 +190,44 @@ python visualize_parameters.py --outdir my_params_analysis
 
 ---
 
+## Project Structure
+
+```
+wsn_routing/
+├── router/                      # Core routing protocols
+│   ├── __init__.py
+│   ├── node.py                  # Node class with energy models
+│   ├── router.py                # Base routing interface
+│   ├── routing.py               # Graph algorithms (Prim's MST)
+│   ├── common.py                # Shared utilities
+│   ├── apteen.py                # APTEEN protocol
+│   ├── jso_route.py             # JSO-optimized routing
+│   └── leach/                   # LEACH protocol variants
+│       ├── __init__.py
+│       ├── leach.py             # Standard LEACH
+│       ├── leach_pso.py         # PSO-optimized LEACH
+│       ├── hierarchical.py      # Hierarchical clustering
+│       └── common.py
+├── optimizer/                   # Metaheuristic algorithms
+│   ├── __init__.py
+│   ├── optimizer.py             # JSO & PSO implementations
+│   ├── initializer.py           # Chaos-based initialization
+│   └── common.py
+├── test_leach.py                # LEACH simulation script
+├── test_apteen.py               # APTEEN simulation script
+├── visualize_parameters.py      # Parameter comparison tool
+├── distribution.py              # Topology generation utilities
+├── kalman_energy_estimation.py  # Energy prediction demo
+├── requirements.txt             # Python dependencies
+├── dependencies.txt             # Additional project info
+├── GLOSSARY_PL.md              # Polish terminology glossary
+├── LICENSE
+├── README.md
+├── Results/                     # Simulation outputs
+├── Dokumentacja/                # LaTeX documentation
+└── Theory/                      # Theoretical materials
+```
+
 ## Output Structure
 
 Each simulation creates the following directory structure:
@@ -215,14 +286,28 @@ python test_leach.py --backend cairo
 ## Requirements
 
 - Python 3.7+
-- matplotlib
-- numpy
-- imageio (for GIF creation)
-- PIL/Pillow (for image processing)
+- numpy - Numerical computing
+- matplotlib - Plotting and visualization
+- imageio - GIF creation
+- Pillow - Image processing
+- filterpy - Kalman filter implementation
+- scienceplots - Publication-quality plot styles
+- pyMetaheuristic - PSO implementation
 
 **Install dependencies:**
 ```bash
 pip install -r requirements.txt
+```
+
+**Dependencies:**
+```
+numpy
+matplotlib
+filterpy
+scienceplots
+imageio
+pillow
+pyMetaheuristic
 ```
 
 ---

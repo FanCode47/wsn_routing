@@ -31,13 +31,19 @@ def parse_args():
     parser.add_argument("--topo-gif", dest="topo_gif", action="store_true", help="Create GIF from topology snapshots")
     parser.add_argument("--no-topo-gif", dest="topo_gif", action="store_false", help="Disable GIF from topology snapshots")
     parser.add_argument("--backend", type=str, default=None, help="Matplotlib backend (default: Agg)")
-    parser.set_defaults(snapshot_gif=os.environ.get("SNAPSHOT_GIF", "1") == "1", topo_gif=os.environ.get("TOPO_GIF", "1") == "1")
+    parser.add_argument("--show", action="store_true", help="Show plots interactively during simulation")
+    parser.set_defaults(snapshot_gif=None, topo_gif=None)
     return parser.parse_args()
 
 
-def test_leach(args):
+def run_leach(
+    args,
+    backend: str | None = None,
+    show: bool = False,
+):
+    """Run LEACH test with optional snapshot/topology/GIF generation"""
     # Don't show windows, save to files instead
-    plt.switch_backend(args.backend or 'Agg')
+    plt.switch_backend(backend or 'Agg')
 
     # Create results folder with timestamp
     if args.output_dir is None:
@@ -87,25 +93,25 @@ def test_leach(args):
             ax.set_ylabel("number of alive nodes")
             snap_path = f"{snapshots_dir}/test_leach_step_{round_idx}.png"
             fig.savefig(snap_path, dpi=300, bbox_inches='tight')
+            if show:
+                plt.show(block=False)
+                plt.pause(0.1)
             plt.close(fig)
             print(f"Snapshot saved to {snap_path}")
             snapshot_paths.append(snap_path)
 
         if topo_step > 0 and round_idx % topo_step == 0:
             topo_path = f"{topology_dir}/topology_leach_{round_idx}.png"
-            leach.plot(save_path=topo_path, show=False)
-            # close figure created inside Router.plot
-            plt.close(leach.plotter.fig)
+            leach.plot(save_path=topo_path, show=show)
+            if not show:
+                plt.close(leach.plotter.fig)
+            else:
+                plt.pause(0.1)
             print(f"Topology snapshot saved to {topo_path}")
             topo_paths.append(topo_path)
 
-        # print(
-        #     {leach.index(head): [leach.index(n) for n in members] for head, members in leach.clusters.items()}
-        # )
         print(f"cluster heads: {len(leach.clusters)}")
         print(f"nodes alive: {n}")
-        # print(leach.route)
-        # leach.plot()
     print("")
     rounds = list(range(len(n_alive)))
     fig, ax = plt.subplots()
@@ -187,4 +193,8 @@ def test_leach(args):
 
 if __name__ == "__main__":
     args = parse_args()
-    test_leach(args)
+    run_leach(
+        args,
+        backend=args.backend,
+        show=args.show,
+    )

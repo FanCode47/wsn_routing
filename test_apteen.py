@@ -31,6 +31,7 @@ def parse_args():
     parser.add_argument("--topo-gif", dest="topo_gif", action="store_true", help="Create GIF from topology snapshots")
     parser.add_argument("--no-topo-gif", dest="topo_gif", action="store_false", help="Disable GIF from topology snapshots")
     parser.add_argument("--backend", type=str, default=None, help="Matplotlib backend (default: Agg)")
+    parser.add_argument("--show", action="store_true", help="Show plots interactively during simulation")
     parser.add_argument("--hard-threshold", type=float, default=50.0, help="Hard threshold (HT) for APTEEN (default: 50.0)")
     parser.add_argument("--soft-threshold", type=float, default=2.0, help="Soft threshold (ST) for APTEEN (default: 2.0)")
     parser.add_argument("--count-time", type=int, default=10, help="Count time (CT) for APTEEN in rounds (default: 10)")
@@ -48,6 +49,7 @@ def run_apteen(
     snapshot_gif: bool | None = None,
     topo_gif: bool | None = None,
     backend: str | None = None,
+    show: bool = False,
     hard_threshold: float = 50.0,
     soft_threshold: float = 2.0,
     count_time: int = 10,
@@ -109,14 +111,20 @@ def run_apteen(
             ax.set_ylabel("number of alive nodes")
             snap_path = f"{snapshots_dir}/test_apteen_step_{round_idx}.png"
             fig.savefig(snap_path, dpi=300, bbox_inches='tight')
+            if show:
+                plt.show(block=False)
+                plt.pause(0.1)
             plt.close(fig)
             print(f"Snapshot saved to {snap_path}")
             snapshot_paths.append(snap_path)
 
         if effective_topo_step > 0 and round_idx % effective_topo_step == 0:
             topo_path = f"{topology_dir}/topology_apteen_{round_idx}.png"
-            apteen.plot(save_path=topo_path, show=False)
-            plt.close(apteen.plotter.fig)
+            apteen.plot(save_path=topo_path, show=show)
+            if not show:
+                plt.close(apteen.plotter.fig)
+            else:
+                plt.pause(0.1)
             print(f"Topology snapshot saved to {topo_path}")
             topo_paths.append(topo_path)
 
@@ -213,6 +221,7 @@ if __name__ == "__main__":
         snapshot_gif=args.snapshot_gif,
         topo_gif=args.topo_gif,
         backend=args.backend,
+        show=args.show,
         hard_threshold=args.hard_threshold,
         soft_threshold=args.soft_threshold,
         count_time=args.count_time,

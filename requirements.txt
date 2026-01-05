@@ -4,3 +4,4 @@ filterpy
 scienceplots
 imageio
 pillow
+pyMetaheuristic
