@@ -47,14 +47,22 @@ python test_leach.py --output-dir my_results
 ---
 
 ### 2. `test_apteen.py` - APTEEN Protocol Simulation
-Simulates the APTEEN (Adaptive Periodic Threshold-sensitive Energy Efficient sensor Network) protocol.
+Simulates the APTEEN (Adaptive Periodic Threshold-sensitive Energy Efficient sensor Network) protocol with configurable threshold parameters.
 
 **Default Parameters:**
 - Nodes: 100
 - Area: 100.0 × 100.0
+- Hard Threshold (HT): 50.0
+- Soft Threshold (ST): 2.0
+- Count Time (CT): 10 rounds
 - Snapshot step: 10 rounds
 - Topology step: 10 rounds
 - GIF export: enabled
+
+**APTEEN Parameters Explanation:**
+- **HT (Hard Threshold)**: Minimum sensor value required to trigger transmission
+- **ST (Soft Threshold)**: Minimum change in sensor value for subsequent transmissions
+- **CT (Count Time)**: Maximum number of rounds between transmissions
 
 **Usage:**
 ```bash
@@ -63,6 +71,15 @@ python test_apteen.py
 
 # Custom configuration
 python test_apteen.py --nodes 80 --area 120 --max-rounds 1000
+
+# Configure APTEEN thresholds
+python test_apteen.py --hard-threshold 60 --soft-threshold 3 --count-time 15
+
+# TEEN-like behavior (high thresholds, rare periodic updates)
+python test_apteen.py --hard-threshold 70 --soft-threshold 5 --count-time 1000
+
+# LEACH-like behavior (low thresholds, frequent updates)
+python test_apteen.py --hard-threshold 0.1 --soft-threshold 0.1 --count-time 1
 
 # Save topology every 5 rounds only
 python test_apteen.py --topo-step 5 --no-snapshot-gif
@@ -76,6 +93,9 @@ python test_apteen.py --output-dir apteen_results
 --nodes NUM              Number of sensor nodes (default: 100)
 --area SIZE              Square area side length (default: 100.0)
 --max-rounds N           Maximum rounds to run (default: None = until all nodes die)
+--hard-threshold VAL     Hard threshold (HT) for APTEEN (default: 50.0)
+--soft-threshold VAL     Soft threshold (ST) for APTEEN (default: 2.0)
+--count-time N           Count time (CT) in rounds for APTEEN (default: 10)
 --output-dir PATH       Output directory (default: auto-generated Results/run_YYYYMMDD_HHMMSS)
 --snapshot-step N       Save alive-nodes plot every N rounds (default: 10, 0 = disabled)
 --topo-step N           Save topology every N rounds (default: 10, 0 = disabled)
@@ -219,6 +239,15 @@ python test_leach.py --nodes 20 --max-rounds 100
 python test_apteen.py --nodes 50 --area 150 --snapshot-step 5 --topo-step 5
 ```
 
+### APTEEN with Custom Thresholds
+```bash
+# Conservative mode (less transmissions, longer lifetime)
+python test_apteen.py --hard-threshold 70 --soft-threshold 5 --count-time 20
+
+# Aggressive mode (more transmissions, shorter lifetime)
+python test_apteen.py --hard-threshold 40 --soft-threshold 1 --count-time 5
+```
+
 ### Compare Parameter Impact
 ```bash
 python visualize_parameters.py --nodes 40 --area 120 --topo-step 25
@@ -243,3 +272,8 @@ python test_apteen.py --output-dir ./my_experiments/exp2
 - Snapshot and topology saving can impact simulation speed. Use larger steps (e.g., 50, 100) for faster runs.
 - For headless servers, use `--backend Agg` (default) to avoid display issues.
 - GIF generation requires imageio. If not installed, a warning will be shown but simulation continues.
+- APTEEN threshold parameters significantly affect network behavior:
+  - Higher HT/ST values → fewer transmissions → longer lifetime but less data
+  - Lower HT/ST values → more transmissions → shorter lifetime but more data
+  - Higher CT values → periodic updates more frequent (LEACH-like)
+  - Lower CT values → event-driven updates dominant (TEEN-like)

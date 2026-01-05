@@ -31,6 +31,9 @@ def parse_args():
     parser.add_argument("--topo-gif", dest="topo_gif", action="store_true", help="Create GIF from topology snapshots")
     parser.add_argument("--no-topo-gif", dest="topo_gif", action="store_false", help="Disable GIF from topology snapshots")
     parser.add_argument("--backend", type=str, default=None, help="Matplotlib backend (default: Agg)")
+    parser.add_argument("--hard-threshold", type=float, default=50.0, help="Hard threshold (HT) for APTEEN (default: 50.0)")
+    parser.add_argument("--soft-threshold", type=float, default=2.0, help="Soft threshold (ST) for APTEEN (default: 2.0)")
+    parser.add_argument("--count-time", type=int, default=10, help="Count time (CT) for APTEEN in rounds (default: 10)")
     parser.set_defaults(snapshot_gif=None, topo_gif=None)
     return parser.parse_args()
 
@@ -45,6 +48,9 @@ def run_apteen(
     snapshot_gif: bool | None = None,
     topo_gif: bool | None = None,
     backend: str | None = None,
+    hard_threshold: float = 50.0,
+    soft_threshold: float = 2.0,
+    count_time: int = 10,
 ):
     """Run APTEEN test with optional snapshot/topology/GIF generation."""
     plt.switch_backend(backend or "Agg")
@@ -68,6 +74,7 @@ def run_apteen(
     os.makedirs(snapshots_dir, exist_ok=True)
     os.makedirs(topology_dir, exist_ok=True)
     print(f"Results will be saved to: {output_dir}")
+    print(f"APTEEN parameters: HT={hard_threshold}, ST={soft_threshold}, CT={count_time}")
 
     sink = (0, 0)
     sensor_nodes = simple_loader(
@@ -75,7 +82,7 @@ def run_apteen(
         uniform_in_square(area, nodes, sink)
     )
 
-    apteen = APTEEN(*sensor_nodes, n_cluster=5)
+    apteen = APTEEN(*sensor_nodes, n_cluster=5, hard_threshold=hard_threshold, soft_threshold=soft_threshold, count_time=count_time)
     apteen.initialize()
     initial_nodes = len(apteen.alive_non_sinks)
     # Guarantee at least one frame when a positive step is requested
@@ -206,4 +213,7 @@ if __name__ == "__main__":
         snapshot_gif=args.snapshot_gif,
         topo_gif=args.topo_gif,
         backend=args.backend,
+        hard_threshold=args.hard_threshold,
+        soft_threshold=args.soft_threshold,
+        count_time=args.count_time,
     )
