@@ -26,6 +26,7 @@ except ImportError:
     Image = None
 from router import APTEEN
 from distribution import simple_loader, uniform_in_square
+from locale_pl import t
 
 
 def slugify(name: str) -> str:
@@ -60,6 +61,7 @@ def run_simulation(
     topo_step: int = 0,
     topo_gif: bool = False,
     config_tag: str | None = None,
+    language: str = "eng",
 ):
     """Run one simulation until all nodes die; track first and complete death rounds, optionally saving topology snapshots/GIF."""
     np.random.seed(42)
@@ -149,7 +151,7 @@ def run_simulation(
 
     if topo_gif and topo_paths:
         if imageio is None:
-            print(f"[WARN] TOPO_GIF requested but imageio not installed; skipping GIF for {config_name}.")
+            print(t("warn_imageio", language, config_name))
         else:
             gif_path = os.path.join(topology_dir or ".", f"{topo_prefix}_topology.gif")
             try:
@@ -173,9 +175,9 @@ def run_simulation(
                             arr = np.concatenate([arr, alpha], axis=-1)
                     frames.append(arr)
                 imageio.mimsave(gif_path, frames, duration=0.2)
-                print(f"Topology GIF saved to {gif_path}")
+                print(t("topology_gif_saved", language, gif_path))
             except Exception as exc:
-                print(f"Failed to create topology GIF for {config_name}: {exc}")
+                print(t("topology_gif_failed_viz", language, config_name, exc))
 
     return metrics, first_death_round, complete_death_round, topo_paths
 
@@ -190,16 +192,14 @@ def visualize_comparison(
     topo_step: int = 0,
     topo_gif: bool = False,
     backend: str | None = None,
+    language: str = "eng",
 ):
     """Run six presets and plot comparison in English without emojis; optionally save topology snapshots/GIFs per preset."""
 
     if not show:
         plt.switch_backend(backend or "Agg")
 
-    print(
-        f"Running six APTEEN presets (nodes={n_sensor}, area={area_size}x{area_size})"
-        " (until full network death)...\n"
-    )
+    print(t("running_presets", language, n_sensor, area_size, area_size))
 
     topo_root = None
     if topo_step > 0 or topo_gif:
@@ -223,30 +223,31 @@ def visualize_comparison(
             topo_step=topo_step,
             topo_gif=topo_gif,
             config_tag=config_tag,
+            language=language,
         )
         return (label, metrics, first, total, color, topo_paths)
 
-    print("[1/6] LEACH-like (HT=0.1, ST=0.1, TC=1)...")
+    print(t("config_progress", language, 1, 6, t("leach_like", language), 0.1, 0.1, 1))
     m1 = run_config("LEACH-like", 0.1, 0.1, 1, color="orange")
-    print(f"      first={m1[2]}, complete={m1[3]}, degradation={m1[3] - m1[2]}")
+    print(f"      {t('first_death', language, m1[2])}, {t('complete_death', language, m1[3])}, {t('degradation', language, m1[3] - m1[2])}")
 
-    print("[2/6] TEEN-like (HT=50, ST=3, TC=1000)...")
+    print(t("config_progress", language, 2, 6, t("teen_like", language), 50, 3, 1000))
     m2 = run_config("TEEN-like", 50.0, 3.0, 1000, color="brown")
-    print(f"      first={m2[2]}, complete={m2[3]}, degradation={m2[3] - m2[2]}")
+    print(f"      {t('first_death', language, m2[2])}, {t('complete_death', language, m2[3])}, {t('degradation', language, m2[3] - m2[2])}")
 
-    print("[3/6] Conservative (HT=70, ST=5, TC=20)...")
+    print(t("config_progress", language, 3, 6, t("conservative", language), 70, 5, 20))
     m3 = run_config("Conservative", 70.0, 5.0, 20, color="blue")
-    print(f"      first={m3[2]}, complete={m3[3]}, degradation={m3[3] - m3[2]}")
+    print(f"      {t('first_death', language, m3[2])}, {t('complete_death', language, m3[3])}, {t('degradation', language, m3[3] - m3[2])}")
 
-    print("[4/6] Aggressive (HT=40, ST=1, TC=5)...")
+    print(t("config_progress", language, 4, 6, t("aggressive", language), 40, 1, 5))
     m4 = run_config("Aggressive", 40.0, 1.0, 5, color="red")
-    print(f"      first={m4[2]}, complete={m4[3]}, degradation={m4[3] - m4[2]}")
+    print(f"      {t('first_death', language, m4[2])}, {t('complete_death', language, m4[3])}, {t('degradation', language, m4[3] - m4[2])}")
 
-    print("[5/6] Balanced (HT=50, ST=2, TC=10)...")
+    print(t("config_progress", language, 5, 6, t("balanced", language), 50, 2, 10))
     m5 = run_config("Balanced", 50.0, 2.0, 10, color="green")
-    print(f"      first={m5[2]}, complete={m5[3]}, degradation={m5[3] - m5[2]}")
+    print(f"      {t('first_death', language, m5[2])}, {t('complete_death', language, m5[3])}, {t('degradation', language, m5[3] - m5[2])}")
 
-    print("[6/6] Adaptive per-cluster...")
+    print(t("config_progress", language, 6, 6, t("adaptive", language), "-", "-", "-"))
     m6 = run_config(
         "Adaptive",
         50.0,
@@ -261,18 +262,18 @@ def visualize_comparison(
         ],
         color="purple",
     )
-    print(f"      first={m6[2]}, complete={m6[3]}, degradation={m6[3] - m6[2]}\n")
+    print(f"      {t('first_death', language, m6[2])}, {t('complete_death', language, m6[3])}, {t('degradation', language, m6[3] - m6[2])}\n")
 
     fig, axes = plt.subplots(2, 3, figsize=(18, 10))
-    fig.suptitle("APTEEN parameter impact: first death vs complete death", fontsize=14, fontweight="bold")
+    fig.suptitle(t("apteen_title", language), fontsize=14, fontweight="bold")
 
     configs = [
-        ("LEACH-like (0.1/0.1/1)", m1[1], m1[2], m1[3], m1[4]),
-        ("TEEN-like (50/3/1000)", m2[1], m2[2], m2[3], m2[4]),
-        ("Conservative (70/5/20)", m3[1], m3[2], m3[3], m3[4]),
-        ("Aggressive (40/1/5)", m4[1], m4[2], m4[3], m4[4]),
-        ("Balanced (50/2/10)", m5[1], m5[2], m5[3], m5[4]),
-        ("Adaptive per-cluster", m6[1], m6[2], m6[3], m6[4]),
+        (f"{t('leach_like', language)} (0.1/0.1/1)", m1[1], m1[2], m1[3], m1[4]),
+        (f"{t('teen_like', language)} (50/3/1000)", m2[1], m2[2], m2[3], m2[4]),
+        (f"{t('conservative', language)} (70/5/20)", m3[1], m3[2], m3[3], m3[4]),
+        (f"{t('aggressive', language)} (40/1/5)", m4[1], m4[2], m4[3], m4[4]),
+        (f"{t('balanced', language)} (50/2/10)", m5[1], m5[2], m5[3], m5[4]),
+        (t('adaptive', language), m6[1], m6[2], m6[3], m6[4]),
     ]
 
     # 1) Alive nodes with first-death markers
@@ -280,9 +281,9 @@ def visualize_comparison(
     for name, metrics, first, total, color in configs:
         ax.plot(metrics["rounds"], metrics["alive"], label=name, linewidth=2.0, color=color, alpha=0.85)
         ax.axvline(x=first, color=color, linestyle=":", alpha=0.5, linewidth=2)
-    ax.set_xlabel("Round", fontweight="bold")
-    ax.set_ylabel("Alive nodes", fontweight="bold")
-    ax.set_title("Alive nodes (dotted = first death)", fontweight="bold")
+    ax.set_xlabel(t("rounds", language), fontweight="bold")
+    ax.set_ylabel(t("alive_nodes_title", language), fontweight="bold")
+    ax.set_title(t("alive_title", language), fontweight="bold")
     ax.legend(loc="upper right", fontsize=7)
     ax.grid(True, alpha=0.3)
 
@@ -291,13 +292,13 @@ def visualize_comparison(
     for name, metrics, first, total, color in configs:
         limit = min(1000, len(metrics["rounds"]))
         ax.plot(metrics["rounds"][:limit], metrics["transmissions"][:limit], label=name, linewidth=1.6, color=color, alpha=0.7)
-    ax.set_xlabel("Round", fontweight="bold")
-    ax.set_ylabel("Transmissions per round", fontweight="bold")
-    ax.set_title("Transmission activity (first 1000 rounds)", fontweight="bold")
+    ax.set_xlabel(t("rounds", language), fontweight="bold")
+    ax.set_ylabel(t("transmissions_per_round", language), fontweight="bold")
+    ax.set_title(t("tx_title", language), fontweight="bold")
     ax.legend(loc="upper right", fontsize=7)
     ax.grid(True, alpha=0.3)
     ax.axvline(x=15, color="black", linestyle="--", alpha=0.25, linewidth=1)
-    ax.text(16, ax.get_ylim()[1] * 0.92, "Event", fontsize=8, color="black")
+    ax.text(16, ax.get_ylim()[1] * 0.92, t("event_label", language), fontsize=8, color="black")
 
     # 3) Energy consumption with first-death markers
     ax = axes[0, 2]
@@ -305,9 +306,9 @@ def visualize_comparison(
         ax.plot(metrics["rounds"], metrics["energy"], label=name, linewidth=2.0, color=color, alpha=0.85)
         if first < len(metrics["energy"]):
             ax.axvline(x=first, color=color, linestyle=":", alpha=0.5, linewidth=2)
-    ax.set_xlabel("Round", fontweight="bold")
-    ax.set_ylabel("Average energy (J)", fontweight="bold")
-    ax.set_title("Energy (steeper = faster drain)", fontweight="bold")
+    ax.set_xlabel(t("rounds", language), fontweight="bold")
+    ax.set_ylabel(t("avg_energy", language), fontweight="bold")
+    ax.set_title(t("energy_title", language), fontweight="bold")
     ax.legend(loc="upper right", fontsize=7)
     ax.grid(True, alpha=0.3)
 
@@ -330,8 +331,8 @@ def visualize_comparison(
 
     ax.set_yticks(range(len(names_short)))
     ax.set_yticklabels(names_short, fontsize=9)
-    ax.set_xlabel("Rounds", fontweight="bold")
-    ax.set_title("Network lifetime: solid=to first death, faded=degradation", fontweight="bold")
+    ax.set_xlabel(t("rounds", language), fontweight="bold")
+    ax.set_title(t("lifetime_title", language), fontweight="bold")
     ax.grid(True, alpha=0.3, axis="x")
     ax.legend(fontsize=8, loc="lower right")
 
@@ -345,8 +346,8 @@ def visualize_comparison(
     bars = ax.bar(range(len(names_short)), total_tx, color=colors, alpha=0.75)
     ax.set_xticks(range(len(names_short)))
     ax.set_xticklabels(names_short, rotation=45, ha="right", fontsize=8)
-    ax.set_ylabel("Total transmissions", fontweight="bold")
-    ax.set_title("Total transmissions over lifetime", fontweight="bold")
+    ax.set_ylabel(t("total_transmissions", language), fontweight="bold")
+    ax.set_title(t("total_tx_title", language), fontweight="bold")
     ax.grid(True, alpha=0.3, axis="y")
     for bar, val in zip(bars, total_tx):
         ax.text(bar.get_x() + bar.get_width() / 2, val, str(int(val)), ha="center", va="bottom", fontsize=8)
@@ -357,8 +358,8 @@ def visualize_comparison(
     bars = ax.bar(range(len(names_short)), avg_tx, color=colors, alpha=0.75)
     ax.set_xticks(range(len(names_short)))
     ax.set_xticklabels(names_short, rotation=45, ha="right", fontsize=8)
-    ax.set_ylabel("Transmissions per round", fontweight="bold")
-    ax.set_title("Average transmission intensity", fontweight="bold")
+    ax.set_ylabel(t("transmissions_per_round", language), fontweight="bold")
+    ax.set_title(t("avg_tx_title", language), fontweight="bold")
     ax.grid(True, alpha=0.3, axis="y")
     for bar, val in zip(bars, avg_tx):
         ax.text(bar.get_x() + bar.get_width() / 2, val, f"{val:.2f}", ha="center", va="bottom", fontsize=8)
@@ -372,24 +373,24 @@ def visualize_comparison(
         save_path = "apteen_parameters_comparison.png"
 
     plt.savefig(save_path, dpi=150, bbox_inches="tight")
-    print(f"Saved figure: {save_path}")
+    print(t("saved_figure", language, save_path))
 
     if show:
         plt.show()
 
     # Textual summary
-    print("\nSummary (rounds):")
-    print("Name                      First   Complete   Degradation   Total TX   TX/round")
-    print("-" * 78)
+    print(t("summary_header", language))
+    print(t("summary_columns", language))
+    print(t("summary_separator", language))
     for name, metrics, first, total, _ in configs:
         total_tx_sum = sum(metrics["transmissions"])
         tx_per_round = total_tx_sum / total if total else 0.0
         print(f"{name:25s} {first:6d} {total:10d} {total - first:12d} {total_tx_sum:10d} {tx_per_round:9.2f}")
 
-    print("\nHow to read the energy chart (top right):")
-    print("- X axis: round; Y axis: average energy of alive nodes (J).")
-    print("- Steeper downward slope = faster energy drain = earlier deaths.")
-    print("- Dotted vertical line marks the first node death for that curve.")
+    print(t("energy_chart_help", language))
+    print(t("energy_chart_x_axis", language))
+    print(t("energy_chart_slope", language))
+    print(t("energy_chart_marker", language))
 
 
 # -------------------- entry point --------------------
@@ -425,6 +426,7 @@ def main():
     parser.add_argument("--topo-gif", dest="topo_gif", action="store_true", help="Export topology GIF per preset (implies snapshots)")
     parser.add_argument("--no-topo-gif", dest="topo_gif", action="store_false", help="Disable topology GIF export")
     parser.add_argument("--backend", type=str, default=None, help="Matplotlib backend (default: Agg)")
+    parser.add_argument("--language", type=str, default="eng", choices=["eng", "pl"], help="Interface language (default: eng)")
     parser.set_defaults(no_show=True, topo_gif=os.environ.get("TOPO_GIF", "1") == "1")
     args = parser.parse_args()
 
@@ -441,6 +443,7 @@ def main():
         topo_step=args.topo_step,
         topo_gif=args.topo_gif,
         backend=args.backend,
+        language=args.language,
     )
 
 

@@ -16,6 +16,7 @@ except ImportError:
 
 from distribution import *
 from router import LEACH
+from locale_pl import t
 
 
 def parse_args():
@@ -32,6 +33,7 @@ def parse_args():
     parser.add_argument("--no-topo-gif", dest="topo_gif", action="store_false", help="Disable GIF from topology snapshots")
     parser.add_argument("--backend", type=str, default=None, help="Matplotlib backend (default: Agg)")
     parser.add_argument("--show", action="store_true", help="Show plots interactively during simulation")
+    parser.add_argument("--language", type=str, default="eng", choices=["eng", "pl"], help="Interface language (default: eng)")
     parser.set_defaults(snapshot_gif=None, topo_gif=None)
     return parser.parse_args()
 
@@ -52,7 +54,7 @@ def run_leach(
     else:
         results_dir = args.output_dir
     os.makedirs(results_dir, exist_ok=True)
-    print(f"Results will be saved to: {results_dir}")
+    print(t("results_saved", args.language, results_dir))
 
     snapshots_dir = os.path.join(results_dir, "snapshots")
     topology_dir = os.path.join(results_dir, "topology")
@@ -89,15 +91,15 @@ def run_leach(
                 x_end = rounds[-1] + (rounds[-1] - rounds[0]) / 5 if len(rounds) > 1 else rounds[0] + 1
                 ax.set_xlim([rounds[0], x_end])
                 ax.set_ylim([0, max(n_alive) + 5])
-            ax.set_xlabel("round")
-            ax.set_ylabel("number of alive nodes")
+            ax.set_xlabel(t("round", args.language))
+            ax.set_ylabel(t("alive_nodes", args.language))
             snap_path = f"{snapshots_dir}/test_leach_step_{round_idx}.png"
             fig.savefig(snap_path, dpi=300, bbox_inches='tight')
             if show:
                 plt.show(block=False)
                 plt.pause(0.1)
             plt.close(fig)
-            print(f"Snapshot saved to {snap_path}")
+            print(t("snapshot_saved", args.language, snap_path))
             snapshot_paths.append(snap_path)
 
         if topo_step > 0 and round_idx % topo_step == 0:
@@ -107,11 +109,11 @@ def run_leach(
                 plt.close(leach.plotter.fig)
             else:
                 plt.pause(0.1)
-            print(f"Topology snapshot saved to {topo_path}")
+            print(t("topology_saved", args.language, topo_path))
             topo_paths.append(topo_path)
 
-        print(f"cluster heads: {len(leach.clusters)}")
-        print(f"nodes alive: {n}")
+        print(t("cluster_heads", args.language, len(leach.clusters)))
+        print(t("nodes_alive", args.language, n))
     print("")
     rounds = list(range(len(n_alive)))
     fig, ax = plt.subplots()
@@ -120,12 +122,12 @@ def run_leach(
         x_end = rounds[-1] + (rounds[-1] - rounds[0]) / 5 if len(rounds) > 1 else rounds[0] + 1
         ax.set_xlim([rounds[0], x_end])
         ax.set_ylim([0, max(n_alive) + 5])
-    ax.set_xlabel("round")
-    ax.set_ylabel("number of alive nodes")
+    ax.set_xlabel(t("round", args.language))
+    ax.set_ylabel(t("alive_nodes", args.language))
     plot_path = f"{results_dir}/test_leach.png"
     fig.savefig(plot_path, dpi=300, bbox_inches='tight')
     plt.close(fig)
-    print(f"Plot saved to {plot_path}")
+    print(t("plot_saved", args.language, plot_path))
 
     if args.snapshot_gif and snapshot_paths:
         if imageio is None:
@@ -156,13 +158,13 @@ def run_leach(
                     frames.append(arr)
 
                 imageio.mimsave(gif_path, frames, duration=0.2)
-                print(f"GIF saved to {gif_path}")
+                print(t("gif_saved", args.language, gif_path))
             except Exception as exc:
-                print(f"Failed to create GIF: {exc}")
+                print(t("gif_failed", args.language, exc))
 
     if args.topo_gif and topo_paths:
         if imageio is None:
-            print("TOPO_GIF=1 set but imageio is not installed; skipping GIF export.")
+            print(t("imageio_missing_topo", args.language))
         else:
             gif_path = f"{results_dir}/topology_leach.gif"
             try:
@@ -186,9 +188,9 @@ def run_leach(
                             arr = np.concatenate([arr, alpha], axis=-1)
                     frames.append(arr)
                 imageio.mimsave(gif_path, frames, duration=0.2)
-                print(f"Topology GIF saved to {gif_path}")
+                print(t("topology_gif_saved", args.language, gif_path))
             except Exception as exc:
-                print(f"Failed to create topology GIF: {exc}")
+                print(t("topology_gif_failed", args.language, exc))
 
 
 if __name__ == "__main__":

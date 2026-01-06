@@ -16,6 +16,7 @@ except ImportError:
 
 from distribution import *
 from router import APTEEN
+from locale_pl import t
 
 
 def parse_args():
@@ -32,6 +33,7 @@ def parse_args():
     parser.add_argument("--no-topo-gif", dest="topo_gif", action="store_false", help="Disable GIF from topology snapshots")
     parser.add_argument("--backend", type=str, default=None, help="Matplotlib backend (default: Agg)")
     parser.add_argument("--show", action="store_true", help="Show plots interactively during simulation")
+    parser.add_argument("--language", type=str, default="eng", choices=["eng", "pl"], help="Interface language (default: eng)")
     parser.add_argument("--hard-threshold", type=float, default=50.0, help="Hard threshold (HT) for APTEEN (default: 50.0)")
     parser.add_argument("--soft-threshold", type=float, default=2.0, help="Soft threshold (ST) for APTEEN (default: 2.0)")
     parser.add_argument("--count-time", type=int, default=10, help="Count time (CT) for APTEEN in rounds (default: 10)")
@@ -53,6 +55,7 @@ def run_apteen(
     hard_threshold: float = 50.0,
     soft_threshold: float = 2.0,
     count_time: int = 10,
+    language: str = "eng",
 ):
     """Run APTEEN test with optional snapshot/topology/GIF generation."""
     plt.switch_backend(backend or "Agg")
@@ -75,7 +78,7 @@ def run_apteen(
     topology_dir = os.path.join(output_dir, "topology")
     os.makedirs(snapshots_dir, exist_ok=True)
     os.makedirs(topology_dir, exist_ok=True)
-    print(f"Results will be saved to: {output_dir}")
+    print(t("results_saved", language, output_dir))
     print(f"APTEEN parameters: HT={hard_threshold}, ST={soft_threshold}, CT={count_time}")
 
     sink = (0, 0)
@@ -107,15 +110,15 @@ def run_apteen(
                 x_end = rounds[-1] + (rounds[-1] - rounds[0]) / 5 if len(rounds) > 1 else rounds[0] + 1
                 ax.set_xlim([rounds[0], x_end])
                 ax.set_ylim([0, max(n_alive) + 5])
-            ax.set_xlabel("round")
-            ax.set_ylabel("number of alive nodes")
+            ax.set_xlabel(t("round", language))
+            ax.set_ylabel(t("alive_nodes", language))
             snap_path = f"{snapshots_dir}/test_apteen_step_{round_idx}.png"
             fig.savefig(snap_path, dpi=300, bbox_inches='tight')
             if show:
                 plt.show(block=False)
                 plt.pause(0.1)
             plt.close(fig)
-            print(f"Snapshot saved to {snap_path}")
+            print(t("snapshot_saved", language, snap_path))
             snapshot_paths.append(snap_path)
 
         if effective_topo_step > 0 and round_idx % effective_topo_step == 0:
@@ -125,11 +128,11 @@ def run_apteen(
                 plt.close(apteen.plotter.fig)
             else:
                 plt.pause(0.1)
-            print(f"Topology snapshot saved to {topo_path}")
+            print(t("topology_saved", language, topo_path))
             topo_paths.append(topo_path)
 
-        print(f"cluster heads: {len(apteen.clusters)}")
-        print(f"nodes alive: {n}")
+        print(t("cluster_heads", language, len(apteen.clusters)))
+        print(t("nodes_alive", language, n))
     print("")
     rounds = list(range(len(n_alive)))
     fig, ax = plt.subplots()
@@ -138,16 +141,16 @@ def run_apteen(
         x_end = rounds[-1] + (rounds[-1] - rounds[0]) / 5 if len(rounds) > 1 else rounds[0] + 1
         ax.set_xlim([rounds[0], x_end])
         ax.set_ylim([0, max(n_alive) + 5])
-    ax.set_xlabel("round")
-    ax.set_ylabel("number of alive nodes")
+    ax.set_xlabel(t("round", language))
+    ax.set_ylabel(t("alive_nodes", language))
     plot_path = f"{output_dir}/test_apteen.png"
     fig.savefig(plot_path, dpi=300, bbox_inches='tight')
     plt.close(fig)
-    print(f"Plot saved to {plot_path}")
+    print(t("plot_saved", language, plot_path))
 
     if snapshot_gif and snapshot_paths:
         if imageio is None:
-            print("SNAPSHOT_GIF=1 set but imageio is not installed; skipping GIF export.")
+            print(t("imageio_missing_snapshot", language))
         else:
             gif_path = f"{output_dir}/test_apteen.gif"
             try:
@@ -174,13 +177,13 @@ def run_apteen(
                     frames.append(arr)
 
                 imageio.mimsave(gif_path, frames, duration=0.2)
-                print(f"GIF saved to {gif_path}")
+                print(t("gif_saved", language, gif_path))
             except Exception as exc:
-                print(f"Failed to create GIF: {exc}")
+                print(t("gif_failed", language, exc))
 
     if topo_gif and topo_paths:
         if imageio is None:
-            print("TOPO_GIF=1 set but imageio is not installed; skipping GIF export.")
+            print(t("imageio_missing_topo", language))
         else:
             gif_path = f"{output_dir}/topology_apteen.gif"
             try:
@@ -204,9 +207,9 @@ def run_apteen(
                             arr = np.concatenate([arr, alpha], axis=-1)
                     frames.append(arr)
                 imageio.mimsave(gif_path, frames, duration=0.2)
-                print(f"Topology GIF saved to {gif_path}")
+                print(t("topology_gif_saved", language, gif_path))
             except Exception as exc:
-                print(f"Failed to create topology GIF: {exc}")
+                print(t("topology_gif_failed", language, exc))
 
 
 if __name__ == "__main__":
@@ -225,4 +228,5 @@ if __name__ == "__main__":
         hard_threshold=args.hard_threshold,
         soft_threshold=args.soft_threshold,
         count_time=args.count_time,
+        language=args.language,
     )
