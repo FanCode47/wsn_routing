@@ -110,3 +110,46 @@ def uniform_in_circle(
         y = sy + r * sin(theta)
         sensors.append((x, y))
     return sensors
+
+
+def uniform_in_rectangle(
+        width: float,
+        height: float,
+        n_sensor: int,
+        sink: Position,
+        sink_relative_position: RelativePosition = "mid"
+) -> Distribution:
+    """Generate uniform distribution in a rectangle area.
+    
+    Args:
+        width: Rectangle width
+        height: Rectangle height
+        n_sensor: Number of sensors
+        sink: Sink position (x, y)
+        sink_relative_position: Position of sink relative to area
+    
+    Returns:
+        List of sensor positions
+    """
+    match sink_relative_position:
+        case "left-bottem":
+            dx, dy = 0, 0
+        case "left-top":
+            dx, dy = 0, -height
+        case "right-bottem":
+            dx, dy = -width, 0
+        case "right-top":
+            dx, dy = -width, -height
+        case "mid":
+            dx, dy = -width / 2, -height / 2
+        case "left-mid":
+            dx, dy = 0, -height / 2
+        case _:
+            raise Exception("Invalid relative position.")
+    sx, sy = sink
+    sx += dx
+    sy += dy
+    sensors = [
+        (sx + rand() * width, sy + rand() * height) for _ in range(n_sensor)
+    ]
+    return sensors

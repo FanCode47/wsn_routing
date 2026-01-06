@@ -23,6 +23,9 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Run APTEEN simulation with snapshot/topology outputs")
     parser.add_argument("--nodes", type=int, default=100, help="Number of sensor nodes (default: 100)")
     parser.add_argument("--area", type=float, default=100.0, help="Square area side length for node placement (default: 100.0)")
+    parser.add_argument("--width", type=float, default=None, help="Area width (overrides --area if specified)")
+    parser.add_argument("--height", type=float, default=None, help="Area height (overrides --area if specified)")
+    parser.add_argument("--initial-energy", type=float, default=0.5, help="Initial energy per node in Joules (default: 0.5)")
     parser.add_argument("--max-rounds", type=int, default=None, help="Maximum rounds to run (None = run until all nodes die)")
     parser.add_argument("--output-dir", type=str, default=None, help="Output folder (if not specified, auto-generates Results/run_YYYYMMDD_HHMMSS)")
     parser.add_argument("--snapshot-step", type=int, default=None, help="Save alive-nodes plot every N rounds (0 disables; default from env SNAPSHOT_STEP)")
@@ -44,6 +47,9 @@ def parse_args():
 def run_apteen(
     nodes: int = 100,
     area: float = 100.0,
+    width: float | None = None,
+    height: float | None = None,
+    initial_energy: float = 0.5,
     max_rounds: int | None = None,
     output_dir: str | None = None,
     snapshot_step: int | None = None,
@@ -81,11 +87,24 @@ def run_apteen(
     print(t("results_saved", language, output_dir))
     print(f"APTEEN parameters: HT={hard_threshold}, ST={soft_threshold}, CT={count_time}")
 
+    # Override default initial energy if specified
+    if initial_energy != 0.5:
+        from router.node import Node
+        Node.default_energy_max = initial_energy
+
     sink = (0, 0)
-    sensor_nodes = simple_loader(
-        sink,
-        uniform_in_square(area, nodes, sink)
-    )
+    # Use rectangular distribution if width and height are specified
+    if width is not None and height is not None:
+        from distribution import uniform_in_rectangle
+        sensor_nodes = simple_loader(
+            sink,
+            uniform_in_rectangle(width, height, nodes, sink)
+        )
+    else:
+        sensor_nodes = simple_loader(
+            sink,
+            uniform_in_square(area, nodes, sink)
+        )
 
     apteen = APTEEN(*sensor_nodes, n_cluster=5, hard_threshold=hard_threshold, soft_threshold=soft_threshold, count_time=count_time)
     apteen.initialize()
@@ -217,6 +236,9 @@ if __name__ == "__main__":
     run_apteen(
         nodes=args.nodes,
         area=args.area,
+        width=args.width,
+        height=args.height,
+        initial_energy=args.initial_energy,
         max_rounds=args.max_rounds,
         output_dir=args.output_dir,
         snapshot_step=args.snapshot_step,

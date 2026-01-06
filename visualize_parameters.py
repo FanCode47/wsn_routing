@@ -56,6 +56,9 @@ def run_simulation(
     per_cluster_params=None,
     n_sensor=30,
     area_size=100.0,
+    width: float | None = None,
+    height: float | None = None,
+    initial_energy: float = 0.5,
     sink=(0.0, 0.0),
     topology_dir: str | None = None,
     topo_step: int = 0,
@@ -65,7 +68,19 @@ def run_simulation(
 ):
     """Run one simulation until all nodes die; track first and complete death rounds, optionally saving topology snapshots/GIF."""
     np.random.seed(42)
-    nodes = simple_loader(sink, uniform_in_square(area_size, n_sensor, sink))
+    
+    # Override default initial energy if specified
+    if initial_energy != 0.5:
+        from router.node import Node
+        Node.default_energy_max = initial_energy
+    
+    # Use rectangular distribution if width and height are specified
+    if width is not None and height is not None:
+        from distribution import uniform_in_rectangle
+        nodes = simple_loader(sink, uniform_in_rectangle(width, height, n_sensor, sink))
+    else:
+        nodes = simple_loader(sink, uniform_in_square(area_size, n_sensor, sink))
+    
     initial_node_count = len(nodes[1])
 
     apteen = APTEEN(
@@ -91,9 +106,14 @@ def run_simulation(
         os.makedirs(topology_dir, exist_ok=True)
         init_path = os.path.join(topology_dir, f"{topo_prefix}_topology_{0:04d}.png")
         apteen.plot(show=False)
-        # Override axis bounds to match requested area_size
-        half_area = area_size / 2
-        apteen.plotter.set_bound(sink[0] - half_area, sink[1] - half_area, sink[0] + half_area, sink[1] + half_area)
+        # Override axis bounds to match requested area dimensions
+        if width is not None and height is not None:
+            half_width = width / 2
+            half_height = height / 2
+            apteen.plotter.set_bound(sink[0] - half_width, sink[1] - half_height, sink[0] + half_width, sink[1] + half_height)
+        else:
+            half_area = area_size / 2
+            apteen.plotter.set_bound(sink[0] - half_area, sink[1] - half_area, sink[0] + half_area, sink[1] + half_area)
         apteen.plotter.fig.savefig(init_path, dpi=150, bbox_inches='tight')
         plt.close(apteen.plotter.fig)
         topo_paths.append(init_path)
@@ -186,6 +206,9 @@ def run_simulation(
 def visualize_comparison(
     n_sensor=30,
     area_size=100.0,
+    width: float | None = None,
+    height: float | None = None,
+    initial_energy: float = 0.5,
     sink=(0.0, 0.0),
     output_dir: str | None = None,
     show: bool = True,
@@ -199,7 +222,11 @@ def visualize_comparison(
     if not show:
         plt.switch_backend(backend or "Agg")
 
-    print(t("running_presets", language, n_sensor, area_size, area_size))
+    # Use width/height if specified, otherwise use area_size
+    if width is not None and height is not None:
+        print(t("running_presets", language, n_sensor, width, height))
+    else:
+        print(t("running_presets", language, n_sensor, area_size, area_size))
 
     topo_root = None
     if topo_step > 0 or topo_gif:
@@ -218,6 +245,9 @@ def visualize_comparison(
             per_cluster_params=per_cluster_params,
             n_sensor=n_sensor,
             area_size=area_size,
+            width=width,
+            height=height,
+            initial_energy=initial_energy,
             sink=sink,
             topology_dir=config_topo_dir,
             topo_step=topo_step,
@@ -408,6 +438,9 @@ def main():
         default=100.0,
         help="Square area side length for node placement (default: 100.0)",
     )
+    parser.add_argument("--width", type=float, default=None, help="Area width (overrides --area if specified)")
+    parser.add_argument("--height", type=float, default=None, help="Area height (overrides --area if specified)")
+    parser.add_argument("--initial-energy", type=float, default=0.5, help="Initial energy per node in Joules (default: 0.5)")
     parser.add_argument(
         "--max-rounds",
         type=int,
@@ -438,6 +471,9 @@ def main():
     visualize_comparison(
         n_sensor=args.nodes,
         area_size=args.area,
+        width=args.width,
+        height=args.height,
+        initial_energy=args.initial_energy,
         output_dir=final_outdir,
         show=not args.no_show,
         topo_step=args.topo_step,

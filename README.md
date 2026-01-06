@@ -52,8 +52,20 @@ Simulates the LEACH (Low-Energy Adaptive Clustering Hierarchy) routing protocol 
 # Run with default parameters
 python test_leach.py
 
-# Custom configuration
+# Custom configuration with square area
 python test_leach.py --nodes 50 --area 150 --max-rounds 500
+
+# Rectangular area (e.g., road/corridor monitoring)
+python test_leach.py --nodes 100 --width 200 --height 50
+
+# Custom initial energy (2x default)
+python test_leach.py --initial-energy 1.0
+
+# Combined: rectangular area with high energy nodes
+python test_leach.py --width 300 --height 100 --initial-energy 1.5 --nodes 150
+
+# Polish language interface
+python test_leach.py --language pl
 
 # Save snapshots every 5 rounds, disable topology GIF
 python test_leach.py --snapshot-step 5 --no-topo-gif
@@ -66,6 +78,9 @@ python test_leach.py --output-dir my_results
 ```
 --nodes NUM              Number of sensor nodes (default: 100)
 --area SIZE              Square area side length (default: 200.0)
+--width WIDTH            Area width in meters (overrides --area if specified with --height)
+--height HEIGHT          Area height in meters (overrides --area if specified with --width)
+--initial-energy JOULES  Initial energy per node in Joules (default: 0.5)
 --max-rounds N           Maximum rounds to run (default: None = until all nodes die)
 --output-dir PATH       Output directory (default: auto-generated Results/run_YYYYMMDD_HHMMSS)
 --snapshot-step N       Save alive-nodes plot every N rounds (default: 10, 0 = disabled)
@@ -75,6 +90,7 @@ python test_leach.py --output-dir my_results
 --topo-gif              Create GIF from topology (enabled by default)
 --no-topo-gif           Disable topology GIF
 --backend NAME          Matplotlib backend: Agg, TkAgg, cairo, etc. (default: Agg)
+--language LANG          Interface language: eng or pl (default: eng)
 ```
 
 ---
@@ -102,6 +118,21 @@ Simulates the APTEEN (Adaptive Periodic Threshold-sensitive Energy Efficient sen
 # Run with default parameters
 python test_apteen.py
 
+# Custom APTEEN configuration
+python test_apteen.py --nodes 50 --area 120 --hard-threshold 60 --soft-threshold 3
+
+# Rectangular area for pipeline monitoring
+python test_apteen.py --width 500 --height 50 --nodes 200
+
+# High energy nodes for extended lifetime
+python test_apteen.py --initial-energy 2.0 --nodes 100
+
+# Combined: large rectangular area with high energy
+python test_apteen.py --width 400 --height 150 --initial-energy 1.5 --nodes 250
+
+# Polish language interface
+python test_apteen.py --language pl --width 200 --height 100
+
 # Custom configuration
 python test_apteen.py --nodes 80 --area 120 --max-rounds 1000
 
@@ -125,6 +156,9 @@ python test_apteen.py --output-dir apteen_results
 ```
 --nodes NUM              Number of sensor nodes (default: 100)
 --area SIZE              Square area side length (default: 100.0)
+--width WIDTH            Area width in meters (overrides --area if specified with --height)
+--height HEIGHT          Area height in meters (overrides --area if specified with --width)
+--initial-energy JOULES  Initial energy per node in Joules (default: 0.5)
 --max-rounds N           Maximum rounds to run (default: None = until all nodes die)
 --hard-threshold VAL     Hard threshold (HT) for APTEEN (default: 50.0)
 --soft-threshold VAL     Soft threshold (ST) for APTEEN (default: 2.0)
@@ -137,6 +171,7 @@ python test_apteen.py --output-dir apteen_results
 --topo-gif              Create GIF from topology (enabled by default)
 --no-topo-gif           Disable topology GIF
 --backend NAME          Matplotlib backend: Agg, TkAgg, cairo, etc. (default: Agg)
+--language LANG          Interface language: eng or pl (default: eng)
 ```
 
 ---
@@ -164,8 +199,17 @@ Runs six different APTEEN configurations and generates comparison charts showing
 # Run with default parameters
 python visualize_parameters.py
 
-# Custom configuration
-python visualize_parameters.py --nodes 50 --area 150
+# Custom configuration with more nodes
+python visualize_parameters.py --nodes 50
+
+# Rectangular area comparison
+python visualize_parameters.py --width 200 --height 80 --nodes 40
+
+# High energy nodes to see extended lifetime differences
+python visualize_parameters.py --initial-energy 2.0 --nodes 50
+
+# Polish language interface with custom area
+python visualize_parameters.py --language pl --width 150 --height 100
 
 # Disable GIF and show plot window
 python visualize_parameters.py --no-topo-gif --show
@@ -178,6 +222,9 @@ python visualize_parameters.py --outdir my_params_analysis
 ```
 --nodes NUM              Number of sensor nodes per simulation (default: 30)
 --area SIZE              Square area side length (default: 100.0)
+--width WIDTH            Area width in meters (overrides --area if specified with --height)
+--height HEIGHT          Area height in meters (overrides --area if specified with --width)
+--initial-energy JOULES  Initial energy per node in Joules (default: 0.5)
 --max-rounds N           Maximum rounds per simulation (default: None)
 --outdir PATH           Output directory prefix (default: Results/params_run)
 --show                  Show plot window (disabled by default)
@@ -186,6 +233,7 @@ python visualize_parameters.py --outdir my_params_analysis
 --topo-gif              Create topology GIF (enabled by default)
 --no-topo-gif           Disable topology GIF
 --backend NAME          Matplotlib backend: Agg, TkAgg, cairo, etc. (default: Agg)
+--language LANG          Interface language: eng or pl (default: eng)
 ```
 
 ---

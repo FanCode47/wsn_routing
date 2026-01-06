@@ -23,6 +23,9 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Run LEACH simulation with snapshot/topology outputs")
     parser.add_argument("--nodes", type=int, default=100, help="Number of sensor nodes (default: 100)")
     parser.add_argument("--area", type=float, default=200.0, help="Square area side length for node placement (default: 200.0)")
+    parser.add_argument("--width", type=float, default=None, help="Area width (overrides --area if specified)")
+    parser.add_argument("--height", type=float, default=None, help="Area height (overrides --area if specified)")
+    parser.add_argument("--initial-energy", type=float, default=0.5, help="Initial energy per node in Joules (default: 0.5)")
     parser.add_argument("--max-rounds", type=int, default=None, help="Maximum rounds to run (None = run until all nodes die)")
     parser.add_argument("--output-dir", type=str, default=None, help="Output folder (if not specified, auto-generates Results/run_YYYYMMDD_HHMMSS)")
     parser.add_argument("--snapshot-step", type=int, default=int(os.environ.get("SNAPSHOT_STEP", "10")), help="Save alive-nodes plot every N rounds (0 disables, default: 10)")
@@ -61,11 +64,23 @@ def run_leach(
     os.makedirs(snapshots_dir, exist_ok=True)
     os.makedirs(topology_dir, exist_ok=True)
 
+    # Determine area dimensions
+    if args.width is not None and args.height is not None:
+        from distribution import uniform_in_rectangle
+        area_width, area_height = args.width, args.height
+        distribution = uniform_in_rectangle(area_width, area_height, args.nodes, (0, 0), "left-bottem")
+    else:
+        from distribution import uniform_in_square
+        area_width = area_height = args.area
+        distribution = uniform_in_square(args.area, args.nodes, (0, 0), "left-bottem")
+    
+    # Set initial energy if specified
+    from router import Node
+    if args.initial_energy != 0.5:
+        Node.default_energy_max = args.initial_energy
+
     sink = (0, 0)
-    nodes = simple_loader(
-        sink,
-        uniform_in_square(args.area, args.nodes, sink, "left-bottem")
-    )
+    nodes = simple_loader(sink, distribution)
 
     # leach = LEACH(*nodes_on_power_line_naive(), n_cluster=5)
     leach = LEACH(*nodes, n_cluster=6)
