@@ -135,7 +135,7 @@ dmypy.json
 /*.png
 
 # Generated results
-Results/
+#Results/
 
 # Theory
 Theory/

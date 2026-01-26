@@ -47,6 +47,16 @@ def run_leach(
     show: bool = False,
 ):
     """Run LEACH test with optional snapshot/topology/GIF generation"""
+    # Apply environment variable defaults for GIF generation
+    env_snapshot_gif = os.environ.get("SNAPSHOT_GIF", "1") == "1"
+    env_topo_gif = os.environ.get("TOPO_GIF", "1") == "1"
+    
+    # Use environment defaults if command-line args are None
+    if args.snapshot_gif is None:
+        args.snapshot_gif = env_snapshot_gif
+    if args.topo_gif is None:
+        args.topo_gif = env_topo_gif
+    
     # Don't show windows, save to files instead
     plt.switch_backend(backend or 'Agg')
 
